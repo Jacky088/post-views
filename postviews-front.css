@@ -1,0 +1,59 @@
+.pv-views-card {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 1.5em 0;
+	padding: 10px 18px;
+	background: #f7f7f8;
+	border-left: 3px solid #4a6cf7;
+	border-radius: 4px;
+	font-size: 14px;
+	color: #555;
+	line-height: 1.5;
+}
+
+.pv-views-icon {
+	font-size: 18px;
+	line-height: 1;
+}
+
+.pv-views-count {
+	font-weight: 600;
+	color: #4a6cf7;
+}
+
+/* Dark mode: prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+	.pv-views-card {
+		background: #2a2a2e;
+		border-left-color: #6b8aff;
+		color: #d1d1d6;
+	}
+
+	.pv-views-count {
+		color: #6b8aff;
+	}
+}
+
+/* Dark mode: common theme class selectors */
+body.dark-mode .pv-views-card,
+body.dark .pv-views-card,
+body.night-mode .pv-views-card,
+html.dark .pv-views-card,
+html.dark-mode .pv-views-card,
+[data-theme="dark"] .pv-views-card,
+[data-color-scheme="dark"] .pv-views-card {
+	background: #2a2a2e;
+	border-left-color: #6b8aff;
+	color: #d1d1d6;
+}
+
+body.dark-mode .pv-views-count,
+body.dark .pv-views-count,
+body.night-mode .pv-views-count,
+html.dark .pv-views-count,
+html.dark-mode .pv-views-count,
+[data-theme="dark"] .pv-views-count,
+[data-color-scheme="dark"] .pv-views-count {
+	color: #6b8aff;
+}
