@@ -23,9 +23,9 @@ class PostViews_Widget extends WP_Widget {
 	public function __construct() {
 		parent::__construct(
 			'views',
-			__( 'Views', 'post-views' ),
+			__( '浏览量', 'post-views' ),
 			array(
-				'description'                 => __( 'Post Views statistics', 'post-views' ),
+				'description'                 => __( '浏览量统计小工具', 'post-views' ),
 				'customize_selective_refresh' => true,
 			)
 		);
@@ -38,7 +38,7 @@ class PostViews_Widget extends WP_Widget {
 	 */
 	protected function defaults() {
 		return array(
-			'title'   => __( 'Views', 'post-views' ),
+			'title'   => __( '浏览量', 'post-views' ),
 			'type'    => 'most_viewed',
 			'mode'    => '',
 			'limit'   => 10,
@@ -149,28 +149,27 @@ class PostViews_Widget extends WP_Widget {
 		$post_types = get_post_types( array( 'public' => true ) );
 		?>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_html_e( 'Title:', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_html_e( '标题：', 'post-views' ); ?></label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'type' ) ); ?>"><?php esc_html_e( 'Statistics Type:', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'type' ) ); ?>"><?php esc_html_e( '统计类型：', 'post-views' ); ?></label>
 			<select name="<?php echo esc_attr( $this->get_field_name( 'type' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'type' ) ); ?>" class="widefat">
-				<option value="least_viewed"<?php selected( 'least_viewed', $instance['type'] ); ?>><?php esc_html_e( 'Least Viewed', 'post-views' ); ?></option>
-				<option value="least_viewed_category"<?php selected( 'least_viewed_category', $instance['type'] ); ?>><?php esc_html_e( 'Least Viewed By Category', 'post-views' ); ?></option>
-				<option value="most_viewed"<?php selected( 'most_viewed', $instance['type'] ); ?>><?php esc_html_e( 'Most Viewed', 'post-views' ); ?></option>
-				<option value="most_viewed_category"<?php selected( 'most_viewed_category', $instance['type'] ); ?>><?php esc_html_e( 'Most Viewed By Category', 'post-views' ); ?></option>
+				<option value="least_viewed"<?php selected( 'least_viewed', $instance['type'] ); ?>><?php esc_html_e( '最少浏览', 'post-views' ); ?></option>
+				<option value="least_viewed_category"<?php selected( 'least_viewed_category', $instance['type'] ); ?>><?php esc_html_e( '按分类最少浏览', 'post-views' ); ?></option>
+				<option value="most_viewed"<?php selected( 'most_viewed', $instance['type'] ); ?>><?php esc_html_e( '最多浏览', 'post-views' ); ?></option>
+				<option value="most_viewed_category"<?php selected( 'most_viewed_category', $instance['type'] ); ?>><?php esc_html_e( '按分类最多浏览', 'post-views' ); ?></option>
 			</select>
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'mode' ) ); ?>"><?php esc_html_e( 'Include Views From:', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'mode' ) ); ?>"><?php esc_html_e( '文章类型：', 'post-views' ); ?></label>
 			<select name="<?php echo esc_attr( $this->get_field_name( 'mode' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'mode' ) ); ?>" class="widefat">
-				<option value=""<?php selected( '', $instance['mode'] ); ?>><?php esc_html_e( 'All', 'post-views' ); ?></option>
+				<option value=""<?php selected( '', $instance['mode'] ); ?>><?php esc_html_e( '全部', 'post-views' ); ?></option>
 				<?php foreach ( $post_types as $post_type ) : ?>
 					<option value="<?php echo esc_attr( $post_type ); ?>"<?php selected( $post_type, $instance['mode'] ); ?>>
 						<?php
 						printf(
-							/* translators: %s: post type name. */
-							esc_html__( '%s Only', 'post-views' ),
+							esc_html__( '仅 %s', 'post-views' ),
 							esc_html( ucfirst( $post_type ) )
 						);
 						?>
@@ -179,18 +178,18 @@ class PostViews_Widget extends WP_Widget {
 			</select>
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>"><?php esc_html_e( 'No. Of Records To Show:', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>"><?php esc_html_e( '显示数量：', 'post-views' ); ?></label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'limit' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'limit' ) ); ?>" type="number" min="1" value="<?php echo esc_attr( $instance['limit'] ); ?>" />
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'chars' ) ); ?>"><?php esc_html_e( 'Maximum Post Title Length (Characters):', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'chars' ) ); ?>"><?php esc_html_e( '标题最大字符数：', 'post-views' ); ?></label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'chars' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'chars' ) ); ?>" type="number" min="0" value="<?php echo esc_attr( $instance['chars'] ); ?>" />
-			<small><?php esc_html_e( '0 to disable.', 'post-views' ); ?></small>
+			<small><?php esc_html_e( '设为 0 则不截断。', 'post-views' ); ?></small>
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'cat_ids' ) ); ?>"><?php esc_html_e( 'Category IDs:', 'post-views' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'cat_ids' ) ); ?>"><?php esc_html_e( '分类 ID：', 'post-views' ); ?></label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'cat_ids' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'cat_ids' ) ); ?>" type="text" value="<?php echo esc_attr( $instance['cat_ids'] ); ?>" />
-			<small><?php esc_html_e( 'Separate multiple categories with commas. Only used by the two "By Category" statistics types.', 'post-views' ); ?></small>
+			<small><?php esc_html_e( '多个分类用英文逗号分隔，仅对"按分类"类型有效。', 'post-views' ); ?></small>
 		</p>
 		<?php
 	}

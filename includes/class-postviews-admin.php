@@ -84,7 +84,7 @@ class PostViews_Admin {
 	 * @return array
 	 */
 	public static function add_column( $columns ) {
-		$columns['views'] = __( 'Views', 'post-views' );
+		$columns['views'] = __( '浏览量', 'post-views' );
 
 		return $columns;
 	}

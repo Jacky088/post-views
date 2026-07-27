@@ -53,8 +53,8 @@ class PostViews_Settings {
 	 */
 	public static function add_menu() {
 		$hook = add_options_page(
-			__( 'PostViews', 'post-views' ),
-			__( 'PostViews', 'post-views' ),
+			__( '浏览量设置', 'post-views' ),
+			__( '浏览量', 'post-views' ),
 			'manage_options',
 			self::SLUG,
 			array( __CLASS__, 'render' )
@@ -169,8 +169,8 @@ class PostViews_Settings {
 	 */
 	protected static function display_choices( $never_label ) {
 		return array(
-			0 => __( 'Display to everyone', 'post-views' ),
-			1 => __( 'Display to registered users only', 'post-views' ),
+			0 => __( '对所有人显示', 'post-views' ),
+			1 => __( '仅对注册用户显示', 'post-views' ),
 			2 => $never_label,
 		);
 	}
@@ -205,7 +205,7 @@ class PostViews_Settings {
 	 * @return void
 	 */
 	protected static function token_list( $tokens ) {
-		echo '<p>' . esc_html__( 'Allowed Variables:', 'post-views' ) . '</p>';
+		echo '<p>' . esc_html__( '可用变量：', 'post-views' ) . '</p>';
 		echo '<ul>';
 		foreach ( $tokens as $token ) {
 			echo '<li><code>%' . esc_html( $token ) . '%</code></li>';
@@ -227,36 +227,36 @@ class PostViews_Settings {
 		$option      = PostViews_Options::OPTION;
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Post Views Options', 'post-views' ); ?></h1>
+			<h1><?php esc_html_e( '浏览量设置', 'post-views' ); ?></h1>
 
 			<form method="post" action="options.php">
 				<?php settings_fields( self::GROUP ); ?>
 
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><label for="views-count"><?php esc_html_e( 'Count Views From:', 'post-views' ); ?></label></th>
+						<th scope="row"><label for="views-count"><?php esc_html_e( '统计来源：', 'post-views' ); ?></label></th>
 						<td>
 							<?php
 							self::select(
 								'count',
 								array(
-									0 => __( 'Everyone', 'post-views' ),
-									1 => __( 'Guests Only', 'post-views' ),
-									2 => __( 'Registered Users Only', 'post-views' ),
+									0 => __( '所有人', 'post-views' ),
+									1 => __( '仅游客', 'post-views' ),
+									2 => __( '仅注册用户', 'post-views' ),
 								)
 							);
 							?>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="views-exclude_bots"><?php esc_html_e( 'Exclude Bot Views:', 'post-views' ); ?></label></th>
+						<th scope="row"><label for="views-exclude_bots"><?php esc_html_e( '排除爬虫：', 'post-views' ); ?></label></th>
 						<td>
 							<?php
 							self::select(
 								'exclude_bots',
 								array(
-									0 => __( 'No', 'post-views' ),
-									1 => __( 'Yes', 'post-views' ),
+									0 => __( '否', 'post-views' ),
+									1 => __( '是', 'post-views' ),
 								)
 							);
 							?>
@@ -264,19 +264,19 @@ class PostViews_Settings {
 					</tr>
 					<?php if ( $using_cache ) : ?>
 						<tr>
-							<th scope="row"><label for="views-use_ajax"><?php esc_html_e( 'Use AJAX To Update Views:', 'post-views' ); ?></label></th>
+							<th scope="row"><label for="views-use_ajax"><?php esc_html_e( '使用 AJAX 更新浏览量：', 'post-views' ); ?></label></th>
 							<td>
 								<?php
 								self::select(
 									'use_ajax',
 									array(
-										0 => __( 'No', 'post-views' ),
-										1 => __( 'Yes', 'post-views' ),
+										0 => __( '否', 'post-views' ),
+										1 => __( '是', 'post-views' ),
 									)
 								);
 								?>
 								<p class="description">
-									<?php esc_html_e( 'You have caching enabled for your WordPress installation, by default Post Views will use AJAX to update the view count. However in some cases, you might not want it.', 'post-views' ); ?>
+									<?php esc_html_e( '你的站点已启用页面缓存，建议开启 AJAX 模式以确保浏览量准确计数。', 'post-views' ); ?>
 								</p>
 							</td>
 						</tr>
@@ -285,21 +285,21 @@ class PostViews_Settings {
 					<?php endif; ?>
 					<tr>
 						<th scope="row">
-							<label for="views-template-template"><?php esc_html_e( 'Views Template:', 'post-views' ); ?></label>
+							<label for="views-template-template"><?php esc_html_e( '浏览量模板：', 'post-views' ); ?></label>
 							<?php self::token_list( array( 'VIEW_COUNT', 'VIEW_COUNT_ROUNDED' ) ); ?>
 						</th>
 						<td>
 							<input type="text" class="large-text code" id="views-template-template" name="<?php echo esc_attr( $option . '[template]' ); ?>" value="<?php echo esc_attr( PostViews_Options::get( 'template', '' ) ); ?>" />
 							<p>
 								<button type="button" class="button" data-postviews-reset="template" data-postviews-target="views-template-template">
-									<?php esc_html_e( 'Restore Default Template', 'post-views' ); ?>
+									<?php esc_html_e( '恢复默认模板', 'post-views' ); ?>
 								</button>
 							</p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="views-template-most_viewed_template"><?php esc_html_e( 'Most Viewed Template:', 'post-views' ); ?></label>
+							<label for="views-template-most_viewed_template"><?php esc_html_e( '热门列表模板：', 'post-views' ); ?></label>
 							<?php
 							self::token_list(
 								array(
@@ -323,19 +323,18 @@ class PostViews_Settings {
 							<textarea class="large-text code" rows="12" id="views-template-most_viewed_template" name="<?php echo esc_attr( $option . '[most_viewed_template]' ); ?>"><?php echo esc_textarea( PostViews_Options::get( 'most_viewed_template', '' ) ); ?></textarea>
 							<p>
 								<button type="button" class="button" data-postviews-reset="most_viewed_template" data-postviews-target="views-template-most_viewed_template">
-									<?php esc_html_e( 'Restore Default Template', 'post-views' ); ?>
+									<?php esc_html_e( '恢复默认模板', 'post-views' ); ?>
 								</button>
 							</p>
 						</td>
 					</tr>
 				</table>
 
-				<h2><?php esc_html_e( 'Display Options', 'post-views' ); ?></h2>
+				<h2><?php esc_html_e( '显示设置', 'post-views' ); ?></h2>
 				<p>
 					<?php
 					printf(
-						/* translators: %s: the the_views() template tag, wrapped in a code element. */
-						esc_html__( 'These options specify where the view counts should be displayed and to whom. By default view counts will be displayed to all visitors. Note that the theme files must contain a call to %s in order for any view count to be displayed.', 'post-views' ),
+						esc_html__( '以下选项控制浏览量在哪些页面显示以及对谁可见。默认对所有访客显示。插件会自动在文章底部追加浏览量，无需手动修改主题模板。也可在模板中调用 %s 手动输出。', 'post-views' ),
 						'<code>the_views()</code>'
 					);
 					?>
@@ -344,12 +343,12 @@ class PostViews_Settings {
 				<table class="form-table" role="presentation">
 					<?php
 					$contexts = array(
-						'display_home'    => array( __( 'Home Page:', 'post-views' ), __( "Don't display on home page", 'post-views' ) ),
-						'display_single'  => array( __( 'Single Posts:', 'post-views' ), __( "Don't display on single posts", 'post-views' ) ),
-						'display_page'    => array( __( 'Pages:', 'post-views' ), __( "Don't display on pages", 'post-views' ) ),
-						'display_archive' => array( __( 'Archive Pages:', 'post-views' ), __( "Don't display on archive pages", 'post-views' ) ),
-						'display_search'  => array( __( 'Search Pages:', 'post-views' ), __( "Don't display on search pages", 'post-views' ) ),
-						'display_other'   => array( __( 'Other Pages:', 'post-views' ), __( "Don't display on other pages", 'post-views' ) ),
+						'display_home'    => array( __( '首页：', 'post-views' ), __( '不在首页显示', 'post-views' ) ),
+						'display_single'  => array( __( '文章页：', 'post-views' ), __( '不在文章页显示', 'post-views' ) ),
+						'display_page'    => array( __( '独立页面：', 'post-views' ), __( '不在独立页面显示', 'post-views' ) ),
+						'display_archive' => array( __( '归档页：', 'post-views' ), __( '不在归档页显示', 'post-views' ) ),
+						'display_search'  => array( __( '搜索页：', 'post-views' ), __( '不在搜索页显示', 'post-views' ) ),
+						'display_other'   => array( __( '其他页面：', 'post-views' ), __( '不在其他页面显示', 'post-views' ) ),
 					);
 					foreach ( $contexts as $key => $labels ) :
 						list( $label, $never_label ) = $labels;
@@ -361,7 +360,7 @@ class PostViews_Settings {
 					<?php endforeach; ?>
 				</table>
 
-				<?php submit_button(); ?>
+				<?php submit_button( __( '保存设置', 'post-views' ) ); ?>
 			</form>
 
 			<hr />

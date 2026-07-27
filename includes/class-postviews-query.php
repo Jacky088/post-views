@@ -67,7 +67,7 @@ class PostViews_Query {
 		$output = '';
 
 		if ( ! $query->have_posts() ) {
-			return '<li>' . __( 'N/A', 'post-views' ) . '</li>' . "\n";
+			return '<li>' . __( '暂无数据', 'post-views' ) . '</li>' . "\n";
 		}
 
 		while ( $query->have_posts() ) {

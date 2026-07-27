@@ -153,7 +153,7 @@ class PostViews_Core {
 			array(
 				'get_callback' => array( __CLASS__, 'rest_get_views' ),
 				'schema'       => array(
-					'description' => __( 'The number of times the post has been viewed.', 'post-views' ),
+					'description' => __( '文章被浏览的次数。', 'post-views' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit', 'embed' ),
 					'readonly'    => true,
