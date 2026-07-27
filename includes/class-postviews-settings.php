@@ -364,8 +364,8 @@ class PostViews_Settings {
 			</form>
 
 			<hr />
-			<h2><?php esc_html_e( '同步主题浏览数据', 'post-views' ); ?></h2>
-			<p><?php esc_html_e( '如果你之前使用 JustNews 等主题自带的浏览量统计，点击下方按钮可将主题的浏览数据（pageviews）同步到本插件。已有数据不会被覆盖。', 'post-views' ); ?></p>
+			<h2><?php esc_html_e( '同步主题浏览数据', 'post-views' ); ?><span style="color:#e74c3c;font-size:12px;margin-left:8px;font-weight:normal;"><?php esc_html_e( '（该功能为测试功能）', 'post-views' ); ?></span></h2>
+			<p><?php esc_html_e( '如果你之前使用 JustNews 等主题自带的浏览量统计，点击下方按钮可将主题的浏览数据同步到本插件。支持的 meta key：pageviews、post_views_count、post_views 等。已有更大数据不会被覆盖。', 'post-views' ); ?></p>
 			<?php if ( isset( $_GET['synced'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( '同步完成！', 'post-views' ); ?></p></div>
 			<?php endif; ?>

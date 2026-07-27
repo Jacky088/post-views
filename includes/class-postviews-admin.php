@@ -51,27 +51,36 @@ class PostViews_Admin {
 
 		global $wpdb;
 
-		// Copy pageviews to views where views is missing or zero.
-		$wpdb->query(
-			"INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value)
-			SELECT pm.post_id, 'views', pm.meta_value
-			FROM $wpdb->postmeta pm
-			LEFT JOIN $wpdb->postmeta pm2 ON pm2.post_id = pm.post_id AND pm2.meta_key = 'views'
-			WHERE pm.meta_key = 'pageviews'
-			AND pm.meta_value > 0
-			AND (pm2.meta_id IS NULL)
-			ON DUPLICATE KEY UPDATE meta_value = GREATEST(pm.meta_value + 0, $wpdb->postmeta.meta_value + 0)"
+		// Common meta keys used by themes for view counting.
+		$source_keys = array( 'pageviews', 'post_views_count', 'post_views', '_post_views', '_post_views_count' );
+
+		$placeholders = implode( ',', array_fill( 0, count( $source_keys ), '%s' ) );
+
+		// Get the max view count from any of the source keys for each post.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, MAX(meta_value + 0) AS max_views
+				FROM $wpdb->postmeta
+				WHERE meta_key IN ($placeholders)
+				AND (meta_value + 0) > 0
+				GROUP BY post_id",
+				...$source_keys
+			)
 		);
 
-		// Also update existing views = 0 rows.
-		$wpdb->query(
-			"UPDATE $wpdb->postmeta v
-			INNER JOIN $wpdb->postmeta p ON p.post_id = v.post_id AND p.meta_key = 'pageviews'
-			SET v.meta_value = p.meta_value
-			WHERE v.meta_key = 'views'
-			AND (v.meta_value + 0) = 0
-			AND (p.meta_value + 0) > 0"
-		);
+		if ( $rows ) {
+			foreach ( $rows as $row ) {
+				$post_id   = (int) $row->post_id;
+				$new_views = (int) $row->max_views;
+
+				$current = (int) get_post_meta( $post_id, 'views', true );
+
+				if ( $new_views > $current ) {
+					update_post_meta( $post_id, 'views', $new_views );
+				}
+			}
+		}
 
 		wp_safe_redirect( admin_url( 'options-general.php?page=post-views&synced=1' ) );
 		exit;
