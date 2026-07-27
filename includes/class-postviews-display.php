@@ -125,6 +125,16 @@ class PostViews_Display {
 	public static function render_count_template( $post_id ) {
 		$post_views = (int) get_post_meta( $post_id, 'views', true );
 
+		// Fallback: read from JustNews theme's pageviews key if our own is empty.
+		if ( 0 === $post_views ) {
+			$fallback = (int) get_post_meta( $post_id, 'pageviews', true );
+			if ( $fallback > 0 ) {
+				$post_views = $fallback;
+				// Persist so future reads are fast and counting continues from here.
+				update_post_meta( $post_id, 'views', $post_views );
+			}
+		}
+
 		return str_replace(
 			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%' ),
 			array( number_format_i18n( $post_views ), self::round_number( $post_views ) ),

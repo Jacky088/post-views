@@ -33,6 +33,48 @@ class PostViews_Admin {
 		// WP-Stats registers its filters late, so hook them up once every
 		// plugin has loaded.
 		add_action( 'plugins_loaded', array( __CLASS__, 'register_wp_stats' ) );
+
+		// Sync from theme views data.
+		add_action( 'admin_post_postviews_sync_theme', array( __CLASS__, 'sync_theme_views' ) );
+	}
+
+	/**
+	 * Bulk sync pageviews from JustNews theme to the views meta key.
+	 *
+	 * @return void
+	 */
+	public static function sync_theme_views() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Unauthorized' );
+		}
+		check_admin_referer( 'postviews_sync_theme' );
+
+		global $wpdb;
+
+		// Copy pageviews to views where views is missing or zero.
+		$wpdb->query(
+			"INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value)
+			SELECT pm.post_id, 'views', pm.meta_value
+			FROM $wpdb->postmeta pm
+			LEFT JOIN $wpdb->postmeta pm2 ON pm2.post_id = pm.post_id AND pm2.meta_key = 'views'
+			WHERE pm.meta_key = 'pageviews'
+			AND pm.meta_value > 0
+			AND (pm2.meta_id IS NULL)
+			ON DUPLICATE KEY UPDATE meta_value = GREATEST(pm.meta_value + 0, $wpdb->postmeta.meta_value + 0)"
+		);
+
+		// Also update existing views = 0 rows.
+		$wpdb->query(
+			"UPDATE $wpdb->postmeta v
+			INNER JOIN $wpdb->postmeta p ON p.post_id = v.post_id AND p.meta_key = 'pageviews'
+			SET v.meta_value = p.meta_value
+			WHERE v.meta_key = 'views'
+			AND (v.meta_value + 0) = 0
+			AND (p.meta_value + 0) > 0"
+		);
+
+		wp_safe_redirect( admin_url( 'options-general.php?page=post-views&synced=1' ) );
+		exit;
 	}
 
 	/**

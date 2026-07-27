@@ -363,6 +363,18 @@ class PostViews_Settings {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<hr />
+			<h2><?php esc_html_e( '同步主题浏览数据', 'post-views' ); ?></h2>
+			<p><?php esc_html_e( '如果你之前使用 JustNews 等主题自带的浏览量统计，点击下方按钮可将主题的浏览数据（pageviews）同步到本插件。已有数据不会被覆盖。', 'post-views' ); ?></p>
+			<?php if ( isset( $_GET['synced'] ) ) : ?>
+				<div class="notice notice-success"><p><?php esc_html_e( '同步完成！', 'post-views' ); ?></p></div>
+			<?php endif; ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="postviews_sync_theme" />
+				<?php wp_nonce_field( 'postviews_sync_theme' ); ?>
+				<?php submit_button( __( '从主题同步浏览量', 'post-views' ), 'secondary', 'submit', false ); ?>
+			</form>
 		</div>
 		<?php
 	}
