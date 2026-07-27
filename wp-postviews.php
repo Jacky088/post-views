@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Post Views
- * Plugin URI: https://blog.huzz.cn/
+ * Plugin URI: https://github.com/Jacky088/post-views
  * Description: 统计并展示文章/页面的浏览次数。
  * Version: 1.0.0
  * Requires at least: 6.0

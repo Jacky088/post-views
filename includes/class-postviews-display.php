@@ -22,6 +22,7 @@ class PostViews_Display {
 	public static function init() {
 		add_shortcode( 'views', array( __CLASS__, 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
+		add_filter( 'the_content', array( __CLASS__, 'append_to_content' ) );
 	}
 
 	/**
@@ -36,6 +37,29 @@ class PostViews_Display {
 			array(),
 			WP_POSTVIEWS_VERSION
 		);
+	}
+
+	/**
+	 * Automatically append the view count to single post/page content.
+	 *
+	 * @param string $content The post content.
+	 * @return string
+	 */
+	public static function append_to_content( $content ) {
+		if ( ! is_singular() || ! in_the_loop() || ! is_main_query() ) {
+			return $content;
+		}
+
+		if ( ! self::should_be_displayed() ) {
+			return $content;
+		}
+
+		$views_html = self::render_count_template( get_the_ID() );
+
+		/** This filter is documented in includes/class-postviews-display.php */
+		$views_html = apply_filters( 'the_views', $views_html );
+
+		return $content . $views_html;
 	}
 
 	/**
