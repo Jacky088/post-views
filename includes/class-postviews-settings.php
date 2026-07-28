@@ -364,15 +364,25 @@ class PostViews_Settings {
 			</form>
 
 			<hr />
-			<h2><?php esc_html_e( '同步主题浏览数据', 'post-views' ); ?><span style="color:#e74c3c;font-size:12px;margin-left:8px;font-weight:normal;"><?php esc_html_e( '（该功能为测试功能）', 'post-views' ); ?></span></h2>
-			<p><?php esc_html_e( '如果你之前使用 JustNews 等主题自带的浏览量统计，点击下方按钮可将主题的浏览数据同步到本插件。支持的 meta key：pageviews、post_views_count、post_views 等。已有更大数据不会被覆盖。', 'post-views' ); ?></p>
+			<h2><?php esc_html_e( '随机写入浏览数据', 'post-views' ); ?><span style="color:#e74c3c;font-size:12px;margin-left:8px;font-weight:normal;"><?php esc_html_e( '（该功能为测试功能）', 'post-views' ); ?></span></h2>
+			<p><?php esc_html_e( '为所有浏览量为 0 的已发布文章随机写入浏览数据。默认范围 100~1000，也可自定义范围。已有浏览量大于 0 的文章不会被修改。', 'post-views' ); ?></p>
 			<?php if ( isset( $_GET['synced'] ) ) : ?>
-				<div class="notice notice-success"><p><?php esc_html_e( '同步完成！', 'post-views' ); ?></p></div>
+				<div class="notice notice-success"><p><?php esc_html_e( '随机浏览量写入完成！', 'post-views' ); ?></p></div>
 			<?php endif; ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="postviews_sync_theme" />
 				<?php wp_nonce_field( 'postviews_sync_theme' ); ?>
-				<?php submit_button( __( '从主题同步浏览量', 'post-views' ), 'secondary', 'submit', false ); ?>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( '随机范围：', 'post-views' ); ?></th>
+						<td>
+							<input type="number" name="pv_random_min" value="100" min="0" style="width:80px;" />
+							<?php esc_html_e( '至', 'post-views' ); ?>
+							<input type="number" name="pv_random_max" value="1000" min="0" style="width:80px;" />
+						</td>
+					</tr>
+				</table>
+				<?php submit_button( __( '随机写入浏览量', 'post-views' ), 'secondary', 'submit', false ); ?>
 			</form>
 		</div>
 		<?php
