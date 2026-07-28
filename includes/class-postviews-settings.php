@@ -376,9 +376,10 @@ class PostViews_Settings {
 					<tr>
 						<th scope="row"><?php esc_html_e( '随机范围：', 'post-views' ); ?></th>
 						<td>
-							<input type="number" name="pv_random_min" value="100" min="0" style="width:80px;" />
+							<input type="number" name="pv_random_min" value="100" min="0" max="99999999" style="width:100px;" />
 							<?php esc_html_e( '至', 'post-views' ); ?>
-							<input type="number" name="pv_random_max" value="1000" min="0" style="width:80px;" />
+							<input type="number" name="pv_random_max" value="1000" min="0" max="99999999" style="width:100px;" />
+							<p class="description"><?php esc_html_e( '请输入 0 ~ 99999999 之间的整数，最小值不得大于最大值。', 'post-views' ); ?></p>
 						</td>
 					</tr>
 				</table>

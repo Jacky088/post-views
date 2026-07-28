@@ -49,10 +49,15 @@ class PostViews_Admin {
 		}
 		check_admin_referer( 'postviews_sync_theme' );
 
-		$min = isset( $_POST['pv_random_min'] ) ? max( 0, (int) $_POST['pv_random_min'] ) : 100;
-		$max = isset( $_POST['pv_random_max'] ) ? max( 0, (int) $_POST['pv_random_max'] ) : 1000;
+		$min = isset( $_POST['pv_random_min'] ) ? (int) $_POST['pv_random_min'] : 100;
+		$max = isset( $_POST['pv_random_max'] ) ? (int) $_POST['pv_random_max'] : 1000;
 
-		if ( $min > $max ) {
+		// Sanitize: ensure positive integers within a safe range.
+		$min = max( 0, min( 99999999, $min ) );
+		$max = max( 0, min( 99999999, $max ) );
+
+		// If min > max or both are 0, fall back to defaults.
+		if ( $min > $max || ( 0 === $min && 0 === $max ) ) {
 			$min = 100;
 			$max = 1000;
 		}
