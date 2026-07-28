@@ -69,11 +69,17 @@ class PostViews_Admin {
 			"UPDATE $wpdb->postmeta SET meta_value = '0' WHERE meta_key = 'views'"
 		);
 
-		// Step 2: Get all published posts/pages and write random views.
+		// Step 2: Get all published posts of any public post type and write random views.
+		$post_types = get_post_types( array( 'public' => true ) );
+		$placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
+
 		$post_ids = $wpdb->get_col(
-			"SELECT ID FROM $wpdb->posts
-			WHERE post_status = 'publish'
-			AND post_type IN ('post', 'page')"
+			$wpdb->prepare(
+				"SELECT ID FROM $wpdb->posts
+				WHERE post_status = 'publish'
+				AND post_type IN ($placeholders)",
+				...array_values( $post_types )
+			)
 		);
 
 		if ( $post_ids ) {
