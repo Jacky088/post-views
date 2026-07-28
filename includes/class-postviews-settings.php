@@ -365,9 +365,9 @@ class PostViews_Settings {
 
 			<hr />
 			<h2><?php esc_html_e( '随机写入浏览数据', 'post-views' ); ?><span style="color:#e74c3c;font-size:12px;margin-left:8px;font-weight:normal;"><?php esc_html_e( '（该功能为测试功能）', 'post-views' ); ?></span></h2>
-			<p><?php esc_html_e( '为所有浏览量为 0 的已发布文章随机写入浏览数据。默认范围 100~1000，也可自定义范围。已有浏览量大于 0 的文章不会被修改。', 'post-views' ); ?></p>
+			<p><?php esc_html_e( '点击后将清零所有文章的浏览量，然后为每篇已发布文章随机写入指定范围内的浏览数据。默认范围 100~1000，可自定义。', 'post-views' ); ?></p>
 			<?php if ( isset( $_GET['synced'] ) ) : ?>
-				<div class="notice notice-success"><p><?php esc_html_e( '随机浏览量写入完成！', 'post-views' ); ?></p></div>
+				<div class="notice notice-success"><p><?php esc_html_e( '已清零并随机写入完成！', 'post-views' ); ?></p></div>
 			<?php endif; ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="postviews_sync_theme" />

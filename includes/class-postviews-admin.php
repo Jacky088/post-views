@@ -59,13 +59,16 @@ class PostViews_Admin {
 
 		global $wpdb;
 
-		// Get all published posts/pages that have views = 0 or no views meta at all.
+		// Step 1: Reset all views to 0.
+		$wpdb->query(
+			"UPDATE $wpdb->postmeta SET meta_value = '0' WHERE meta_key = 'views'"
+		);
+
+		// Step 2: Get all published posts/pages and write random views.
 		$post_ids = $wpdb->get_col(
-			"SELECT p.ID FROM $wpdb->posts p
-			LEFT JOIN $wpdb->postmeta pm ON pm.post_id = p.ID AND pm.meta_key = 'views'
-			WHERE p.post_status = 'publish'
-			AND p.post_type IN ('post', 'page')
-			AND (pm.meta_value IS NULL OR (pm.meta_value + 0) = 0)"
+			"SELECT ID FROM $wpdb->posts
+			WHERE post_status = 'publish'
+			AND post_type IN ('post', 'page')"
 		);
 
 		if ( $post_ids ) {
