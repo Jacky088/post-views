@@ -69,7 +69,10 @@ class PostViews_Display {
 		/** This filter is documented in includes/class-postviews-display.php */
 		$views_html = apply_filters( 'the_views', $views_html );
 
-		return $content . $views_html;
+		// Wrap views in a positioned container for bottom-right placement.
+		$positioned_views = '<div class="pv-positioned-wrapper">' . $views_html . '</div>';
+
+		return $content . $positioned_views;
 	}
 
 	/**
