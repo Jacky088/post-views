@@ -116,6 +116,7 @@ class PostViews_Settings {
 					'template'             => PostViews_Options::default_template( 'template' ),
 					'most_viewed_template' => PostViews_Options::default_template( 'most_viewed_template' ),
 				),
+				'confirmRandom' => __( '警告：此操作将清零所有文章的浏览量，然后写入随机数据。此操作不可恢复！\n\n确定要继续吗？', 'post-views' ),
 			)
 		);
 	}
@@ -154,6 +155,24 @@ class PostViews_Settings {
 			if ( isset( $input[ $key ] ) ) {
 				$current[ $key ] = wp_kses_post( trim( $input[ $key ] ) );
 			}
+		}
+
+		// Template style selection.
+		if ( isset( $input['template_style'] ) ) {
+			$styles = array_keys( PostViews_Options::template_styles() );
+			if ( in_array( $input['template_style'], $styles, true ) ) {
+				$current['template_style'] = $input['template_style'];
+				// Update the template content when style changes.
+				$all_styles = PostViews_Options::template_styles();
+				$current['template'] = $all_styles[ $input['template_style'] ];
+			}
+		}
+
+		// Enabled post types.
+		if ( isset( $input['enabled_post_types'] ) && is_array( $input['enabled_post_types'] ) ) {
+			$current['enabled_post_types'] = array_map( 'sanitize_key', $input['enabled_post_types'] );
+		} else {
+			$current['enabled_post_types'] = array();
 		}
 
 		// No flush needed here: update_option() fires update_option_views_options
@@ -283,13 +302,134 @@ class PostViews_Settings {
 					<?php else : ?>
 						<input type="hidden" name="<?php echo esc_attr( $option . '[use_ajax]' ); ?>" value="0" />
 					<?php endif; ?>
+
 					<tr>
 						<th scope="row">
-							<label for="views-template-template"><?php esc_html_e( '浏览量模板：', 'post-views' ); ?></label>
+							<label for="views-template-style"><?php esc_html_e( '浏览量显示样式：', 'post-views' ); ?></label>
+						</th>
+						<td>
+							<?php
+							$current_style = PostViews_Options::get( 'template_style', 'default' );
+							$styles        = PostViews_Options::template_styles();
+							$style_names   = array(
+								'default'   => __( '默认卡片', 'post-views' ),
+								'minimal'   => __( '极简风格', 'post-views' ),
+								'badge'     => __( '徽章样式', 'post-views' ),
+								'inline'    => __( '行内显示', 'post-views' ),
+								'counter'   => __( '计数器', 'post-views' ),
+								'card-icon' => __( '图标卡片', 'post-views' ),
+							);
+							?>
+							<div class="pv-style-selector">
+								<?php foreach ( $styles as $key => $template ) : ?>
+									<label class="pv-style-option">
+										<input type="radio" name="<?php echo esc_attr( $option . '[template_style]' ); ?>" value="<?php echo esc_attr( $key ); ?>" <?php checked( $current_style, $key ); ?> />
+										<div class="pv-style-preview">
+											<div class="pv-style-name"><?php echo esc_html( $style_names[ $key ] ); ?></div>
+											<div class="pv-style-demo">
+												<?php
+												echo wp_kses_post(
+													str_replace(
+														array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%' ),
+														array( '1,234', '1.2K' ),
+														$template
+													)
+												);
+												?>
+											</div>
+										</div>
+									</label>
+								<?php endforeach; ?>
+							</div>
+							<style>
+								.pv-style-selector {
+									display: grid;
+									grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+									gap: 12px;
+									margin-top: 8px;
+								}
+								.pv-style-option {
+									cursor: pointer;
+									display: block;
+								}
+								.pv-style-option input[type="radio"] {
+									position: absolute;
+									opacity: 0;
+								}
+								.pv-style-preview {
+									border: 2px solid #ddd;
+									border-radius: 6px;
+									padding: 12px;
+									background: #fff;
+									transition: all 0.2s;
+									min-height: 100px;
+									display: flex;
+									flex-direction: column;
+									gap: 8px;
+								}
+								.pv-style-option input[type="radio"]:checked + .pv-style-preview {
+									border-color: #2271b1;
+									background: #f0f6fc;
+								}
+								.pv-style-option:hover .pv-style-preview {
+									border-color: #2271b1;
+								}
+								.pv-style-name {
+									font-weight: 600;
+									font-size: 13px;
+									color: #1d2327;
+									margin-bottom: 4px;
+								}
+								.pv-style-demo {
+									flex: 1;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									padding: 8px 0;
+								}
+							</style>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label for="views-enabled-post-types"><?php esc_html_e( '启用的内容类型：', 'post-views' ); ?></label>
+						</th>
+						<td>
+							<?php
+							$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+							if ( ! is_array( $enabled_types ) ) {
+								$enabled_types = array( 'post', 'page' );
+							}
+							$post_types = get_post_types( array( 'public' => true ), 'objects' );
+							?>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( '选择要显示浏览量的内容类型', 'post-views' ); ?></legend>
+								<?php foreach ( $post_types as $post_type ) : ?>
+									<label style="display: inline-block; margin-right: 20px; margin-bottom: 8px;">
+										<input type="checkbox" name="<?php echo esc_attr( $option . '[enabled_post_types][]' ); ?>" value="<?php echo esc_attr( $post_type->name ); ?>" <?php checked( in_array( $post_type->name, $enabled_types, true ) ); ?> />
+										<?php echo esc_html( $post_type->labels->name ); ?>
+										<span style="color: #666; font-size: 12px;">(<?php echo esc_html( $post_type->name ); ?>)</span>
+									</label>
+									<br />
+								<?php endforeach; ?>
+							</fieldset>
+							<p class="description">
+								<?php esc_html_e( '选择要统计和显示浏览量的内容类型。默认包含文章（post）和页面（page）。', 'post-views' ); ?>
+							</p>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label for="views-template-template"><?php esc_html_e( '自定义模板（高级）：', 'post-views' ); ?></label>
 							<?php self::token_list( array( 'VIEW_COUNT', 'VIEW_COUNT_ROUNDED' ) ); ?>
 						</th>
 						<td>
 							<input type="text" class="large-text code" id="views-template-template" name="<?php echo esc_attr( $option . '[template]' ); ?>" value="<?php echo esc_attr( PostViews_Options::get( 'template', '' ) ); ?>" />
+							<p class="description">
+								<?php esc_html_e( '如需完全自定义HTML，可在此处修改。留空则使用上方选择的样式。', 'post-views' ); ?>
+							</p>
 							<p>
 								<button type="button" class="button" data-postviews-reset="template" data-postviews-target="views-template-template">
 									<?php esc_html_e( '恢复默认模板', 'post-views' ); ?>
@@ -369,7 +509,7 @@ class PostViews_Settings {
 			<?php if ( isset( $_GET['synced'] ) && '1' === $_GET['synced'] ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( '已清零并随机写入完成！', 'post-views' ); ?></p></div>
 			<?php endif; ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<form id="postviews-random-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="postviews_sync_theme" />
 				<?php wp_nonce_field( 'postviews_sync_theme' ); ?>
 				<table class="form-table" role="presentation">

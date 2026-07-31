@@ -196,6 +196,15 @@ class PostViews_Counter {
 			return;
 		}
 
+		// Check if current post type is enabled.
+		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+		if ( ! is_array( $enabled_types ) ) {
+			$enabled_types = array( 'post', 'page' );
+		}
+		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
+			return;
+		}
+
 		if ( self::using_ajax() ) {
 			return;
 		}
@@ -219,6 +228,15 @@ class PostViews_Counter {
 
 		$post = self::current_post();
 		if ( null === $post ) {
+			return;
+		}
+
+		// Check if current post type is enabled.
+		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+		if ( ! is_array( $enabled_types ) ) {
+			$enabled_types = array( 'post', 'page' );
+		}
+		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
 			return;
 		}
 

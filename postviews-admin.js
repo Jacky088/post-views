@@ -26,3 +26,28 @@ document.addEventListener( 'click', function( event ) {
 
 	field.value = postviewsAdminL10n.defaults[ key ];
 } );
+
+/**
+ * Confirmation for the random views data write operation.
+ *
+ * This is a destructive action that zeros all existing view counts before
+ * writing random data, so we require explicit confirmation before allowing
+ * the form to submit.
+ */
+document.addEventListener( 'DOMContentLoaded', function() {
+	const form = document.getElementById( 'postviews-random-form' );
+
+	if ( ! form ) {
+		return;
+	}
+
+	form.addEventListener( 'submit', function( event ) {
+		if ( typeof postviewsAdminL10n === 'undefined' || ! postviewsAdminL10n.confirmRandom ) {
+			return;
+		}
+
+		if ( ! confirm( postviewsAdminL10n.confirmRandom ) ) {
+			event.preventDefault();
+		}
+	} );
+} );

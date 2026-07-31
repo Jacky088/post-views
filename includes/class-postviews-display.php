@@ -54,6 +54,16 @@ class PostViews_Display {
 			return $content;
 		}
 
+		// Check if current post type is enabled.
+		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+		if ( ! is_array( $enabled_types ) ) {
+			$enabled_types = array( 'post', 'page' );
+		}
+		$current_post_type = get_post_type();
+		if ( ! in_array( $current_post_type, $enabled_types, true ) ) {
+			return $content;
+		}
+
 		$views_html = self::render_count_template( get_the_ID() );
 
 		/** This filter is documented in includes/class-postviews-display.php */

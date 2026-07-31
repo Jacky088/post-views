@@ -86,6 +86,24 @@ class PostViews_Options {
 			'use_ajax'             => 1,
 			'template'             => self::default_template( 'template' ),
 			'most_viewed_template' => self::default_template( 'most_viewed_template' ),
+			'template_style'       => 'default',
+			'enabled_post_types'   => array( 'post', 'page' ),
+		);
+	}
+
+	/**
+	 * Available template style presets.
+	 *
+	 * @return array Associative array of style_key => template_html.
+	 */
+	public static function template_styles() {
+		return array(
+			'default'   => '<div class="pv-views-card"><span class="pv-views-icon">&#128065;</span> ' . __( '本文已被阅读', 'post-views' ) . ' <span class="pv-views-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div>',
+			'minimal'   => '<div class="pv-views-minimal"><span class="pv-icon">&#128065;</span> <span class="pv-count">%VIEW_COUNT%</span> ' . __( '次阅读', 'post-views' ) . '</div>',
+			'badge'     => '<div class="pv-views-badge"><span class="pv-badge-icon">&#128293;</span> <strong>%VIEW_COUNT%</strong> ' . __( '热度', 'post-views' ) . '</div>',
+			'inline'    => '<span class="pv-views-inline">&#128065; %VIEW_COUNT% ' . __( '浏览', 'post-views' ) . '</span>',
+			'counter'   => '<div class="pv-views-counter"><div class="pv-counter-label">' . __( '浏览次数', 'post-views' ) . '</div><div class="pv-counter-number">%VIEW_COUNT%</div></div>',
+			'card-icon' => '<div class="pv-views-card-icon"><div class="pv-icon-wrapper">&#128214;</div><div class="pv-text-wrapper"><div class="pv-label">' . __( '阅读量', 'post-views' ) . '</div><div class="pv-value">%VIEW_COUNT%</div></div></div>',
 		);
 	}
 
@@ -108,7 +126,8 @@ class PostViews_Options {
 			return '<li><a href="%POST_URL%" title="%POST_TITLE%">%POST_TITLE%</a> - %VIEW_COUNT% ' . __( '次浏览', 'post-views' ) . '</li>';
 		}
 
-		return '<div class="pv-views-card"><span class="pv-views-icon">&#128065;</span> ' . __( '本文已被阅读', 'post-views' ) . ' <span class="pv-views-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div>';
+		$styles = self::template_styles();
+		return $styles['default'];
 	}
 
 	/**
