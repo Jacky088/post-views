@@ -35,6 +35,13 @@ add_filter( 'site_transient_update_plugins', function ( $transient ) {
 	return $transient;
 } );
 
+// Add settings link on plugins page.
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $links ) {
+	$settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=post-views' ) ) . '">' . __( '设置', 'post-views' ) . '</a>';
+	array_unshift( $links, $settings_link );
+	return $links;
+} );
+
 // Classes. Required at file load because the activation hook and the option
 // accessor are both reached before any action fires.
 require_once __DIR__ . '/includes/class-postviews-options.php';

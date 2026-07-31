@@ -309,15 +309,15 @@ class PostViews_Settings {
 						</th>
 						<td>
 							<?php
-							$current_style = PostViews_Options::get( 'template_style', 'default' );
+							$current_style = PostViews_Options::get( 'template_style', 'modern-card' );
 							$styles        = PostViews_Options::template_styles();
 							$style_names   = array(
-								'default'   => __( '默认卡片', 'post-views' ),
-								'minimal'   => __( '极简风格', 'post-views' ),
-								'badge'     => __( '徽章样式', 'post-views' ),
-								'inline'    => __( '行内显示', 'post-views' ),
-								'counter'   => __( '计数器', 'post-views' ),
-								'card-icon' => __( '图标卡片', 'post-views' ),
+								'modern-card'    => __( '现代卡片', 'post-views' ),
+								'gradient-badge' => __( '渐变徽章', 'post-views' ),
+								'minimal-line'   => __( '极简线条', 'post-views' ),
+								'stat-box'       => __( '统计盒子', 'post-views' ),
+								'glass-card'     => __( '毛玻璃卡片', 'post-views' ),
+								'outline-chip'   => __( '描边芯片', 'post-views' ),
 							);
 							?>
 							<div class="pv-style-selector">

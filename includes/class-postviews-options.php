@@ -86,7 +86,7 @@ class PostViews_Options {
 			'use_ajax'             => 1,
 			'template'             => self::default_template( 'template' ),
 			'most_viewed_template' => self::default_template( 'most_viewed_template' ),
-			'template_style'       => 'default',
+			'template_style'       => 'modern-card',
 			'enabled_post_types'   => array( 'post', 'page' ),
 		);
 	}
@@ -98,12 +98,12 @@ class PostViews_Options {
 	 */
 	public static function template_styles() {
 		return array(
-			'default'   => '<div class="pv-views-card"><span class="pv-views-icon">&#128065;</span> ' . __( '本文已被阅读', 'post-views' ) . ' <span class="pv-views-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div>',
-			'minimal'   => '<div class="pv-views-minimal"><span class="pv-icon">&#128065;</span> <span class="pv-count">%VIEW_COUNT%</span> ' . __( '次阅读', 'post-views' ) . '</div>',
-			'badge'     => '<div class="pv-views-badge"><span class="pv-badge-icon">&#128293;</span> <strong>%VIEW_COUNT%</strong> ' . __( '热度', 'post-views' ) . '</div>',
-			'inline'    => '<span class="pv-views-inline">&#128065; %VIEW_COUNT% ' . __( '浏览', 'post-views' ) . '</span>',
-			'counter'   => '<div class="pv-views-counter"><div class="pv-counter-label">' . __( '浏览次数', 'post-views' ) . '</div><div class="pv-counter-number">%VIEW_COUNT%</div></div>',
-			'card-icon' => '<div class="pv-views-card-icon"><div class="pv-icon-wrapper">&#128214;</div><div class="pv-text-wrapper"><div class="pv-label">' . __( '阅读量', 'post-views' ) . '</div><div class="pv-value">%VIEW_COUNT%</div></div></div>',
+			'modern-card'    => '<div class="pv-modern-card"><div class="pv-icon-circle">&#128065;</div><div class="pv-content"><div class="pv-label">' . __( '阅读量', 'post-views' ) . '</div><div class="pv-number">%VIEW_COUNT%</div></div></div>',
+			'gradient-badge' => '<div class="pv-gradient-badge"><span class="pv-badge-icon">&#128293;</span><span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> ' . __( '次热度', 'post-views' ) . '</span></div>',
+			'minimal-line'   => '<div class="pv-minimal-line"><span class="pv-icon">&#128065;</span><span class="pv-divider"></span><span class="pv-text">%VIEW_COUNT% ' . __( '次浏览', 'post-views' ) . '</span></div>',
+			'stat-box'       => '<div class="pv-stat-box"><div class="pv-stat-icon">&#128200;</div><div class="pv-stat-content"><div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div></div></div>',
+			'glass-card'     => '<div class="pv-glass-card"><div class="pv-glass-icon">&#128065;</div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
+			'outline-chip'   => '<div class="pv-outline-chip"><span class="pv-chip-icon">&#128214;</span><span class="pv-chip-label">' . __( '浏览', 'post-views' ) . '</span><span class="pv-chip-count">%VIEW_COUNT%</span></div>',
 		);
 	}
 
@@ -127,7 +127,7 @@ class PostViews_Options {
 		}
 
 		$styles = self::template_styles();
-		return $styles['default'];
+		return $styles['modern-card'];
 	}
 
 	/**
