@@ -86,7 +86,7 @@ class PostViews_Options {
 			'use_ajax'             => 1,
 			'template'             => self::default_template( 'template' ),
 			'most_viewed_template' => self::default_template( 'most_viewed_template' ),
-			'template_style'       => 'modern-card',
+			'template_style'       => 'minimal-line',
 			'enabled_post_types'   => array( 'post', 'page' ),
 		);
 	}
@@ -127,7 +127,7 @@ class PostViews_Options {
 		}
 
 		$styles = self::template_styles();
-		return $styles['modern-card'];
+		return $styles['minimal-line'];
 	}
 
 	/**

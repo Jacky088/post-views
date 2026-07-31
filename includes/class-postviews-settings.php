@@ -309,7 +309,7 @@ class PostViews_Settings {
 						</th>
 						<td>
 							<?php
-							$current_style = PostViews_Options::get( 'template_style', 'modern-card' );
+							$current_style = PostViews_Options::get( 'template_style', 'minimal-line' );
 							$styles        = PostViews_Options::template_styles();
 							$style_names   = array(
 								'modern-card'    => __( '现代卡片', 'post-views' ),
