@@ -1,0 +1,18 @@
+fix(settings): hide qa_post (问题) and kuaixun (快讯) from enabled_post_types UI (v2.0.7)
+
+These two JustNews-provided custom post types render their templates
+without running the the_content filter, so the auto-append path produces
+nothing on those pages. Leaving them as user-selectable checkboxes only
+invites the "I checked it but nothing shows up on the page" confusion
+flagged in earlier tickets.
+
+Two-pronged strip so neither path can re-enable them:
+
+1. Settings UI: skip rendering the checkbox for either post type (the
+   field is still emitted for all *other* public types).
+2. Sanitize: even if a previous install has qa_post / kuaixun in the
+   stored option, the next save strips them out so historical values
+   cannot survive a settings round-trip.
+
+No behaviour changes for any other post type. The plugin version is
+bumped to 2.0.7 to bust browser/CDN caches.

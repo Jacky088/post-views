@@ -178,11 +178,22 @@ class PostViews_Settings {
 		}
 
 		// Enabled post types.
+		// Exclude JustNews' custom post types (qa_post "问题", kuaixun "快讯"):
+		// their templates bypass the the_content filter, so auto-appended counts
+		// never render on those pages. Strip them from both the submitted form
+		// and any leftover DB value, so users can no longer enable them here and
+		// historical entries cannot resurrect them on the next save.
+		$blocked_types = array( 'qa_post', 'kuaixun' );
 		if ( isset( $input['enabled_post_types'] ) && is_array( $input['enabled_post_types'] ) ) {
-			$current['enabled_post_types'] = array_map( 'sanitize_key', $input['enabled_post_types'] );
+			$submitted            = array_map( 'sanitize_key', $input['enabled_post_types'] );
+			$submitted            = array_values( array_diff( $submitted, $blocked_types ) );
+			$current['enabled_post_types'] = $submitted;
 		} else {
 			$current['enabled_post_types'] = array();
 		}
+		$current['enabled_post_types'] = array_values(
+			array_diff( (array) $current['enabled_post_types'], $blocked_types )
+		);
 
 		// No flush needed here: update_option() fires update_option_views_options
 		// once the sanitised value is stored, and PostViews_Options listens for it.
@@ -414,11 +425,18 @@ class PostViews_Settings {
 							if ( ! is_array( $enabled_types ) ) {
 								$enabled_types = array( 'post', 'page' );
 							}
-							$post_types = get_post_types( array( 'public' => true ), 'objects' );
+							// 隐藏第三方主题注册的自定义类型：'qa_post'（问题）和
+							// 'kuaixun'（快讯）。它们的模板绕过 the_content，过滤器
+							// 路径无法追加浏览量，因此不在此处提供勾选。
+							$unsupported_types = array( 'qa_post', 'kuaixun' );
+							$post_types        = get_post_types( array( 'public' => true ), 'objects' );
 							?>
 							<fieldset>
 								<legend class="screen-reader-text"><?php esc_html_e( '选择要显示浏览量的内容类型', 'post-views' ); ?></legend>
 								<?php foreach ( $post_types as $post_type ) : ?>
+									<?php if ( in_array( $post_type->name, $unsupported_types, true ) ) : ?>
+										<?php continue; ?>
+									<?php endif; ?>
 									<label style="display: inline-block; margin-right: 20px; margin-bottom: 8px;">
 										<input type="checkbox" name="<?php echo esc_attr( $option . '[enabled_post_types][]' ); ?>" value="<?php echo esc_attr( $post_type->name ); ?>" <?php checked( in_array( $post_type->name, $enabled_types, true ) ); ?> />
 										<?php echo esc_html( $post_type->labels->name ); ?>
