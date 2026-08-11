@@ -101,6 +101,15 @@ class PostViews_Settings {
 	 * @return void
 	 */
 	public static function enqueue_scripts() {
+		// 前端样式同样用于后台预览，让设置页的样式卡片与前台真正显示一致
+		// （胶囊几何、颜色、阴影都来自同一份 CSS）。
+		wp_enqueue_style(
+			'post-views-front',
+			plugins_url( 'postviews-front.css', WP_POSTVIEWS_MAIN_FILE ),
+			array(),
+			WP_POSTVIEWS_VERSION
+		);
+
 		wp_enqueue_script(
 			'post-views-admin',
 			plugins_url( 'postviews-admin.js', WP_POSTVIEWS_MAIN_FILE ),
@@ -345,6 +354,8 @@ class PostViews_Settings {
 								<?php endforeach; ?>
 							</div>
 							<style>
+								/* 后台样式预览：仅作为样式"画布"，不再拉伸/居中，
+								 * 让胶囊按自身尺寸显示，与前台观感一致。 */
 								.pv-style-selector {
 									display: grid;
 									grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -360,14 +371,14 @@ class PostViews_Settings {
 									opacity: 0;
 								}
 								.pv-style-preview {
-									border: 2px solid #ddd;
+									border: 1px solid #ddd;
 									border-radius: 6px;
-									padding: 12px;
+									padding: 10px;
 									background: #fff;
 									transition: all 0.2s;
-									min-height: 100px;
 									display: flex;
 									flex-direction: column;
+									align-items: flex-start;
 									gap: 8px;
 								}
 								.pv-style-option input[type="radio"]:checked + .pv-style-preview {
@@ -381,14 +392,13 @@ class PostViews_Settings {
 									font-weight: 600;
 									font-size: 13px;
 									color: #1d2327;
-									margin-bottom: 4px;
+									margin-bottom: 2px;
 								}
 								.pv-style-demo {
-									flex: 1;
 									display: flex;
-									align-items: center;
-									justify-content: center;
-									padding: 8px 0;
+									align-items: flex-start;
+									justify-content: flex-start;
+									padding: 4px 0;
 								}
 							</style>
 						</td>
