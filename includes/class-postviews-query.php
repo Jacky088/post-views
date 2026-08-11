@@ -56,6 +56,15 @@ class PostViews_Query {
 			'meta_key'       => 'views', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		);
 
+		// Cache the rendered list so repeated widget/shortcode calls within the
+		// same request window (or any persistent object cache) do not re-run the
+		// meta_value_num query. Key is derived from the resolved arguments.
+		$cache_key = 'postviews_list_' . md5( wp_json_encode( $query_args ) );
+		$cached    = wp_cache_get( $cache_key, 'post-views' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		if ( null !== $args['category'] ) {
 			$query_args['category__in'] = (array) $args['category'];
 		}
@@ -67,7 +76,9 @@ class PostViews_Query {
 		$output = '';
 
 		if ( ! $query->have_posts() ) {
-			return '<li>' . __( '暂无数据', 'post-views' ) . '</li>' . "\n";
+			$output = '<li>' . __( '暂无数据', 'post-views' ) . '</li>' . "\n";
+			wp_cache_set( $cache_key, $output, 'post-views', HOUR_IN_SECONDS );
+			return $output;
 		}
 
 		while ( $query->have_posts() ) {
@@ -76,6 +87,8 @@ class PostViews_Query {
 		}
 
 		wp_reset_postdata();
+
+		wp_cache_set( $cache_key, $output, 'post-views', HOUR_IN_SECONDS );
 
 		return $output;
 	}

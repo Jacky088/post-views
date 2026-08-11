@@ -64,15 +64,26 @@ class PostViews_Admin {
 
 		global $wpdb;
 
-		// Step 1: Reset all views to 0.
-		$wpdb->query(
-			"UPDATE $wpdb->postmeta SET meta_value = '0' WHERE meta_key = 'views'"
-		);
-
-		// Step 2: Get all published posts of any public post type and write random views.
+		// Step 1: Reset target views to 0.
+		// Only the published posts of public types that we are about to rewrite,
+		// not every 'views' row on the whole site. This keeps the bulk reset from
+		// touching other post statuses or unrelated meta.
 		$post_types = get_post_types( array( 'public' => true ) );
 		$placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
 
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE $wpdb->postmeta pm
+				INNER JOIN $wpdb->posts p ON p.ID = pm.post_id
+				SET pm.meta_value = '0'
+				WHERE pm.meta_key = 'views'
+				AND p.post_status = 'publish'
+				AND p.post_type IN ($placeholders)",
+				...array_values( $post_types )
+			)
+		);
+
+		// Step 2: Get all published posts of any public post type and write random views.
 		$post_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT ID FROM $wpdb->posts

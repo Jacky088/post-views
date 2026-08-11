@@ -3,7 +3,7 @@
  * Plugin Name: Post Views
  * Plugin URI: https://github.com/Jacky088/post-views
  * Description: 统计并展示文章/页面的浏览次数。
- * Version: 1.0.7
+ * Version: 2.0.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: 木木
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 // Version.
-define( 'WP_POSTVIEWS_VERSION', '1.0.7' );
+define( 'WP_POSTVIEWS_VERSION', '2.0.0' );
 define( 'WP_POSTVIEWS_MAIN_FILE', __FILE__ );
 
 // Block WordPress.org update checks for this plugin.
@@ -38,8 +38,9 @@ add_filter( 'site_transient_update_plugins', function ( $transient ) {
 // Add settings link on plugins page.
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $links ) {
 	$settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=post-views' ) ) . '">' . __( '设置', 'post-views' ) . '</a>';
-	// Prepend settings link before deactivate link.
-	return array_merge( array( 'settings' => $settings_link ), $links );
+	// Append settings link after the deactivate link: 停用 | 设置
+	$links[] = $settings_link;
+	return $links;
 } );
 
 // Classes. Required at file load because the activation hook and the option

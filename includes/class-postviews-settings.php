@@ -318,7 +318,10 @@ class PostViews_Settings {
 								'stat-box'       => __( '统计盒子', 'post-views' ),
 								'glass-card'     => __( '毛玻璃卡片', 'post-views' ),
 								'outline-chip'   => __( '描边芯片', 'post-views' ),
-							);
+								'neon-pill'      => __( '霓虹胶囊', 'post-views' ),
+								'sunset-pill'    => __( '日落胶囊', 'post-views' ),
+								'solid-dark-pill' => __( '暗色实心胶囊', 'post-views' ),
+								);
 							?>
 							<div class="pv-style-selector">
 								<?php foreach ( $styles as $key => $template ) : ?>

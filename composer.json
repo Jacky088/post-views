@@ -1,19 +1,20 @@
 {
-    "name": "lesterchan/wp-postviews",
-    "description": "Enables you to display how many times a post/page had been viewed.",
+    "name": "huzz/post-views",
+    "description": "统计并展示文章/页面的浏览次数。",
     "type": "wordpress-plugin",
     "keywords": [
         "wordpress",
         "plugin",
-        "views"
+        "views",
+        "post-views"
     ],
     "license": [
-        "GPL-2.0-only"
+        "GPL-2.0-or-later"
     ],
     "authors": [
         {
-            "name": "Lester Chan",
-            "email": "lesterchan@gmail.com"
+            "name": "木木",
+            "homepage": "https://blog.huzz.cn/"
         }
     ],
     "require": {

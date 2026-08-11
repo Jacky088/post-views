@@ -293,9 +293,62 @@ class PostViews_Counter {
 			return;
 		}
 
+		// 防刷：同一 IP 在短时间窗口内对同一文章只计一次自增。
+		// 不改变原有计数行为，仅在高频重复请求时跳过自增并返回当前值。
+		$client_ip    = self::get_client_ip();
+		$rate_key     = 'postviews_rate_' . md5( $client_ip . '|' . $post_id );
+		$rate_blocked = get_transient( $rate_key );
+		if ( false !== $rate_blocked ) {
+			$current_views = (int) get_post_meta( $post_id, 'views', true );
+			wp_send_json_success(
+				array(
+					'views'     => $current_views,
+					'throttled' => true,
+				)
+			);
+		}
+		// 首次（或冷却已过）：记录 3 秒冷却标记。
+		set_transient( $rate_key, time(), 3 );
+
 		$post_views = self::increment( $post_id, 'postviews_increment_views_ajax' );
 
 		wp_send_json_success( array( 'views' => $post_views ) );
+	}
+
+	/**
+	 * Best-effort client IP for rate-limiting.
+	 *
+	 * Climbs the usual proxy headers in a defensive order and falls back to the
+	 * direct remote address. Not authoritative for security - IPs are spoofable -
+	 * but it is enough to blunt naive view-count inflation from a single host.
+	 *
+	 * @return string
+	 */
+	protected static function get_client_ip() {
+		$candidates = array(
+			'HTTP_CLIENT_IP',
+			'HTTP_X_FORWARDED_FOR',
+			'HTTP_X_FORWARDED',
+			'HTTP_X_CLUSTER_CLIENT_IP',
+			'HTTP_FORWARDED_FOR',
+			'HTTP_FORWARDED',
+			'REMOTE_ADDR',
+		);
+
+		foreach ( $candidates as $key ) {
+			if ( empty( $_SERVER[ $key ] ) ) {
+				continue;
+			}
+			$value = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
+			// HTTP_X_FORWARDED_FOR may be a comma list; take the first.
+			$parts = explode( ',', $value );
+			$ip    = trim( $parts[0] );
+			if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+				return $ip;
+			}
+		}
+
+		return '0.0.0.0';
 	}
 
 	/**

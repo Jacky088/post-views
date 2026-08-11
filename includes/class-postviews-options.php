@@ -104,6 +104,11 @@ class PostViews_Options {
 			'stat-box'       => '<div class="pv-stat-box"><div class="pv-stat-icon">&#128200;</div><div class="pv-stat-content"><div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div></div></div>',
 			'glass-card'     => '<div class="pv-glass-card"><div class="pv-glass-icon">&#128065;</div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
 			'outline-chip'   => '<div class="pv-outline-chip"><span class="pv-chip-icon">&#128214;</span><span class="pv-chip-label">' . __( '浏览', 'post-views' ) . '</span><span class="pv-chip-count">%VIEW_COUNT%</span></div>',
+
+			// New capsule variants (same silhouette as the red-box reference).
+			'neon-pill'      => '<div class="pv-neon-pill"><span class="pv-neon-icon">&#128288;</span><span class="pv-neon-text">' . __( '浏览', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
+			'sunset-pill'    => '<div class="pv-sunset-pill"><span class="pv-sunset-icon">&#9728;</span><span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> ' . __( '次浏览', 'post-views' ) . '</span></div>',
+			'solid-dark-pill' => '<div class="pv-solid-dark-pill"><span class="pv-solid-dot"></span><span class="pv-solid-text">' . __( '阅读量', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
 		);
 	}
 

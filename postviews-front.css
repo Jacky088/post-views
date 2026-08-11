@@ -1,3 +1,16 @@
+/*
+ * Post Views - Frontend Display Styles
+ *
+ * All display variants share the same capsule silhouette (red-box reference):
+ *   - border-radius: 50px   (full pill)
+ *   - padding:      10px 18px  (=> height 38px with 18px icon)
+ *   - gap:          8px      (icon <-> text)
+ *   - font-size:    14px / icon 18px
+ *
+ * Per-style differentiation is by COLOR / TEXTURE only, never by shape or
+ * sizing, so every style stays visually consistent in the page.
+ */
+
 /* Positioned Wrapper - 定位容器 */
 .pv-positioned-wrapper {
 	position: relative;
@@ -23,57 +36,66 @@ article .content,
 	position: relative;
 }
 
-/* Modern Card - 现代卡片样式 */
+/* ---------------------------------------------------------------
+ * Modern Card - 现代卡片样式 (capsule)
+ * --------------------------------------------------------------- */
 .pv-modern-card {
 	display: inline-flex;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 	margin: 0;
-	padding: 16px 20px;
+	padding: 10px 18px;
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+	border-radius: 50px;
+	box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 	color: #fff;
+	font-size: 14px;
+	font-weight: 500;
 	transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .pv-modern-card:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+	box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
 }
 
 .pv-modern-card .pv-icon-circle {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 42px;
-	height: 42px;
-	background: rgba(255, 255, 255, 0.2);
-	border-radius: 50%;
-	font-size: 20px;
-	backdrop-filter: blur(10px);
+	width: 18px;
+	height: 18px;
+	background: transparent;
+	border-radius: 0;
+	font-size: 18px;
+	line-height: 1;
+	backdrop-filter: none;
 }
 
 .pv-modern-card .pv-content {
 	display: flex;
-	flex-direction: column;
-	gap: 2px;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
 }
 
 .pv-modern-card .pv-label {
-	font-size: 12px;
-	opacity: 0.9;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	font-size: 14px;
+	opacity: 0.95;
+	text-transform: none;
+	letter-spacing: 0;
+	font-weight: 500;
 }
 
 .pv-modern-card .pv-number {
-	font-size: 20px;
+	font-size: 14px;
 	font-weight: 700;
 	line-height: 1;
 }
 
-/* Gradient Badge - 渐变徽章样式 */
+/* ---------------------------------------------------------------
+ * Gradient Badge - 渐变胶囊样式 (基准 - 红框样式)
+ * --------------------------------------------------------------- */
 .pv-gradient-badge {
 	display: inline-flex;
 	align-items: center;
@@ -95,7 +117,14 @@ article .content,
 
 .pv-gradient-badge .pv-badge-icon {
 	font-size: 18px;
+	line-height: 1;
 	animation: pulse 2s ease-in-out infinite;
+}
+
+.pv-gradient-badge .pv-badge-count {
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1;
 }
 
 @keyframes pulse {
@@ -107,46 +136,60 @@ article .content,
 	}
 }
 
-/* Minimal Line - 极简线条样式 */
+/* ---------------------------------------------------------------
+ * Minimal Line - 极简线条胶囊样式
+ * --------------------------------------------------------------- */
 .pv-minimal-line {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	margin: 0;
-	padding: 8px 0;
+	padding: 10px 18px;
 	font-size: 14px;
 	color: #555;
-	border-bottom: 2px solid #e0e0e0;
+	background: transparent;
+	border: 2px solid #e0e0e0;
+	border-radius: 50px;
+	transition: all 0.3s;
+}
+
+.pv-minimal-line:hover {
+	border-color: #667eea;
 }
 
 .pv-minimal-line .pv-icon {
 	font-size: 18px;
+	line-height: 1;
 	color: #667eea;
 }
 
 .pv-minimal-line .pv-divider {
-	width: 1px;
-	height: 16px;
-	background: #e0e0e0;
+	display: none; /* no divider inside a capsule */
 }
 
 .pv-minimal-line .pv-text {
-	font-weight: 500;
+	font-weight: 600;
 	color: #333;
+	font-size: 14px;
+	line-height: 1;
 }
 
-/* Stat Box - 统计盒子样式 */
+/* ---------------------------------------------------------------
+ * Stat Box - 统计盒子胶囊样式
+ * --------------------------------------------------------------- */
 .pv-stat-box {
 	display: inline-flex;
 	align-items: center;
-	gap: 14px;
+	gap: 8px;
 	margin: 0;
-	padding: 16px 22px;
+	padding: 10px 18px;
 	background: #fff;
 	border: 2px solid #667eea;
-	border-radius: 10px;
+	border-radius: 50px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 	transition: all 0.3s;
+	font-size: 14px;
+	color: #333;
 }
 
 .pv-stat-box:hover {
@@ -155,67 +198,78 @@ article .content,
 }
 
 .pv-stat-box .pv-stat-icon {
-	font-size: 32px;
+	font-size: 18px;
+	line-height: 1;
 	color: #667eea;
 }
 
 .pv-stat-box .pv-stat-content {
 	display: flex;
-	flex-direction: column;
-	gap: 2px;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
 }
 
 .pv-stat-box .pv-stat-value {
-	font-size: 24px;
+	font-size: 14px;
 	font-weight: 700;
 	color: #333;
 	line-height: 1;
 }
 
 .pv-stat-box .pv-stat-label {
-	font-size: 12px;
+	font-size: 14px;
 	color: #666;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	text-transform: none;
+	letter-spacing: 0;
+	font-weight: 500;
+	line-height: 1;
 }
 
-/* Glass Card - 毛玻璃卡片样式 */
+/* ---------------------------------------------------------------
+ * Glass Card - 毛玻璃胶囊样式
+ * --------------------------------------------------------------- */
 .pv-glass-card {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	margin: 0;
-	padding: 14px 20px;
-	background: rgba(255, 255, 255, 0.15);
-	border: 1px solid rgba(255, 255, 255, 0.3);
-	border-radius: 16px;
+	padding: 10px 18px;
+	background: rgba(255, 255, 255, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.6);
+	border-radius: 50px;
 	backdrop-filter: blur(20px);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 	color: #333;
 	font-size: 14px;
+	font-weight: 500;
 }
 
 .pv-glass-card .pv-glass-icon {
-	font-size: 20px;
-	opacity: 0.8;
+	font-size: 18px;
+	line-height: 1;
+	opacity: 0.85;
 }
 
 .pv-glass-card .pv-glass-count {
 	font-weight: 700;
 	color: #667eea;
-	font-size: 16px;
+	font-size: 14px;
+	line-height: 1;
 }
 
-/* Outline Chip - 描边芯片样式 */
+/* ---------------------------------------------------------------
+ * Outline Chip - 描边胶囊样式
+ * --------------------------------------------------------------- */
 .pv-outline-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 8px 16px;
+	padding: 10px 18px;
 	background: transparent;
 	border: 2px solid #667eea;
-	border-radius: 8px;
+	border-radius: 50px;
 	color: #667eea;
 	font-size: 14px;
 	font-weight: 600;
@@ -228,34 +282,154 @@ article .content,
 }
 
 .pv-outline-chip .pv-chip-icon {
-	font-size: 16px;
+	font-size: 18px;
+	line-height: 1;
 }
 
 .pv-outline-chip .pv-chip-label {
-	opacity: 0.8;
+	opacity: 0.95;
+	font-size: 14px;
+	line-height: 1;
 }
 
 .pv-outline-chip .pv-chip-count {
-	padding: 2px 8px;
-	background: rgba(102, 126, 234, 0.1);
-	border-radius: 4px;
+	padding: 0;
+	background: transparent;
+	border-radius: 0;
 	font-weight: 700;
+	font-size: 14px;
+	line-height: 1;
 }
 
 .pv-outline-chip:hover .pv-chip-count {
-	background: rgba(255, 255, 255, 0.2);
+	background: transparent;
 	color: #fff;
 }
 
-/* Dark mode: prefers-color-scheme */
+/* ---------------------------------------------------------------
+ * Neon Pill - 霓虹胶囊样式 (深色底 + 青色发光)
+ * --------------------------------------------------------------- */
+.pv-neon-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 18px;
+	background: #0f172a;
+	border: 1px solid #22d3ee;
+	border-radius: 50px;
+	box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+	color: #e0f7ff;
+	font-size: 14px;
+	font-weight: 500;
+	transition: box-shadow 0.2s;
+}
+
+.pv-neon-pill:hover {
+	box-shadow: 0 0 18px rgba(34, 211, 238, 0.7);
+}
+
+.pv-neon-pill .pv-neon-icon {
+	font-size: 18px;
+	line-height: 1;
+}
+
+.pv-neon-pill .pv-neon-text {
+	font-size: 14px;
+	line-height: 1;
+}
+
+.pv-neon-pill .pv-neon-text strong {
+	color: #22d3ee;
+	font-weight: 700;
+}
+
+/* ---------------------------------------------------------------
+ * Sunset Pill - 日落胶囊样式 (橙黄渐变)
+ * --------------------------------------------------------------- */
+.pv-sunset-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 18px;
+	background: linear-gradient(135deg, #ff9a44 0%, #ff5e62 100%);
+	border-radius: 50px;
+	box-shadow: 0 4px 15px rgba(255, 94, 98, 0.3);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 500;
+	transition: transform 0.2s;
+}
+
+.pv-sunset-pill:hover {
+	transform: scale(1.05);
+}
+
+.pv-sunset-pill .pv-sunset-icon {
+	font-size: 18px;
+	line-height: 1;
+}
+
+.pv-sunset-pill .pv-sunset-text {
+	font-size: 14px;
+	line-height: 1;
+}
+
+.pv-sunset-pill .pv-sunset-text strong {
+	font-weight: 700;
+}
+
+/* ---------------------------------------------------------------
+ * Solid Dark Pill - 暗色实心胶囊 (深灰底 + 绿点)
+ * --------------------------------------------------------------- */
+.pv-solid-dark-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 18px;
+	background: #1f2937;
+	border: 1px solid #374151;
+	border-radius: 50px;
+	color: #f3f4f6;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background 0.2s, border-color 0.2s;
+}
+
+.pv-solid-dark-pill:hover {
+	background: #111827;
+	border-color: #4b5563;
+}
+
+.pv-solid-dark-pill .pv-solid-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #34d399;
+	box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+	flex: 0 0 auto;
+}
+
+.pv-solid-dark-pill .pv-solid-text {
+	font-size: 14px;
+	line-height: 1;
+}
+
+.pv-solid-dark-pill .pv-solid-text strong {
+	color: #34d399;
+	font-weight: 700;
+}
+
+/* ===============================================================
+ * Dark mode - prefers-color-scheme
+ * Capsule shapes are unchanged; only colors/textures are tuned.
+ * =============================================================== */
 @media (prefers-color-scheme: dark) {
 	.pv-minimal-line {
 		color: #d1d1d6;
-		border-bottom-color: #4a4a4e;
-	}
-
-	.pv-minimal-line .pv-divider {
-		background: #4a4a4e;
+		border-color: #4a4a4e;
 	}
 
 	.pv-minimal-line .pv-text {
@@ -280,7 +454,7 @@ article .content,
 	}
 
 	.pv-glass-card {
-		background: rgba(42, 42, 46, 0.7);
+		background: rgba(42, 42, 46, 0.6);
 		border-color: rgba(255, 255, 255, 0.1);
 		color: #d1d1d6;
 	}
@@ -299,134 +473,99 @@ article .content,
 		color: #fff;
 	}
 
-	.pv-outline-chip .pv-chip-count {
-		background: rgba(107, 138, 255, 0.15);
+	.pv-neon-pill {
+		background: #020617;
+		border-color: #22d3ee;
+	}
+
+	.pv-solid-dark-pill {
+		background: #111827;
+		border-color: #4b5563;
+	}
+
+	.pv-sunset-pill {
+		box-shadow: 0 4px 15px rgba(255, 94, 98, 0.45);
 	}
 }
 
 /* Dark mode: common theme class selectors */
-body.dark-mode .pv-minimal-line,
-body.dark .pv-minimal-line,
-body.night-mode .pv-minimal-line,
-html.dark .pv-minimal-line,
-html.dark-mode .pv-minimal-line,
+body.dark-mode,
+body.dark,
+body.night-mode,
+html.dark,
+html.dark-mode {
+	--pv-dark: 1;
+}
+
 [data-theme="dark"] .pv-minimal-line,
 [data-color-scheme="dark"] .pv-minimal-line {
 	color: #d1d1d6;
-	border-bottom-color: #4a4a4e;
+	border-color: #4a4a4e;
 }
 
-body.dark-mode .pv-minimal-line .pv-divider,
-body.dark .pv-minimal-line .pv-divider,
-body.night-mode .pv-minimal-line .pv-divider,
-html.dark .pv-minimal-line .pv-divider,
-html.dark-mode .pv-minimal-line .pv-divider,
-[data-theme="dark"] .pv-minimal-line .pv-divider,
-[data-color-scheme="dark"] .pv-minimal-line .pv-divider {
-	background: #4a4a4e;
-}
-
-body.dark-mode .pv-minimal-line .pv-text,
-body.dark .pv-minimal-line .pv-text,
-body.night-mode .pv-minimal-line .pv-text,
-html.dark .pv-minimal-line .pv-text,
-html.dark-mode .pv-minimal-line .pv-text,
 [data-theme="dark"] .pv-minimal-line .pv-text,
 [data-color-scheme="dark"] .pv-minimal-line .pv-text {
 	color: #f0f0f0;
 }
 
-body.dark-mode .pv-stat-box,
-body.dark .pv-stat-box,
-body.night-mode .pv-stat-box,
-html.dark .pv-stat-box,
-html.dark-mode .pv-stat-box,
 [data-theme="dark"] .pv-stat-box,
 [data-color-scheme="dark"] .pv-stat-box {
 	background: #2a2a2e;
 	border-color: #6b8aff;
 }
 
-body.dark-mode .pv-stat-box .pv-stat-icon,
-body.dark .pv-stat-box .pv-stat-icon,
-body.night-mode .pv-stat-box .pv-stat-icon,
-html.dark .pv-stat-box .pv-stat-icon,
-html.dark-mode .pv-stat-box .pv-stat-icon,
 [data-theme="dark"] .pv-stat-box .pv-stat-icon,
 [data-color-scheme="dark"] .pv-stat-box .pv-stat-icon {
 	color: #6b8aff;
 }
 
-body.dark-mode .pv-stat-box .pv-stat-value,
-body.dark .pv-stat-box .pv-stat-value,
-body.night-mode .pv-stat-box .pv-stat-value,
-html.dark .pv-stat-box .pv-stat-value,
-html.dark-mode .pv-stat-box .pv-stat-value,
 [data-theme="dark"] .pv-stat-box .pv-stat-value,
 [data-color-scheme="dark"] .pv-stat-box .pv-stat-value {
 	color: #f0f0f0;
 }
 
-body.dark-mode .pv-stat-box .pv-stat-label,
-body.dark .pv-stat-box .pv-stat-label,
-body.night-mode .pv-stat-box .pv-stat-label,
-html.dark .pv-stat-box .pv-stat-label,
-html.dark-mode .pv-stat-box .pv-stat-label,
 [data-theme="dark"] .pv-stat-box .pv-stat-label,
 [data-color-scheme="dark"] .pv-stat-box .pv-stat-label {
 	color: #9ca3af;
 }
 
-body.dark-mode .pv-glass-card,
-body.dark .pv-glass-card,
-body.night-mode .pv-glass-card,
-html.dark .pv-glass-card,
-html.dark-mode .pv-glass-card,
 [data-theme="dark"] .pv-glass-card,
 [data-color-scheme="dark"] .pv-glass-card {
-	background: rgba(42, 42, 46, 0.7);
+	background: rgba(42, 42, 46, 0.6);
 	border-color: rgba(255, 255, 255, 0.1);
 	color: #d1d1d6;
 }
 
-body.dark-mode .pv-glass-card .pv-glass-count,
-body.dark .pv-glass-card .pv-glass-count,
-body.night-mode .pv-glass-card .pv-glass-count,
-html.dark .pv-glass-card .pv-glass-count,
-html.dark-mode .pv-glass-card .pv-glass-count,
 [data-theme="dark"] .pv-glass-card .pv-glass-count,
 [data-color-scheme="dark"] .pv-glass-card .pv-glass-count {
 	color: #6b8aff;
 }
 
-body.dark-mode .pv-outline-chip,
-body.dark .pv-outline-chip,
-body.night-mode .pv-outline-chip,
-html.dark .pv-outline-chip,
-html.dark-mode .pv-outline-chip,
 [data-theme="dark"] .pv-outline-chip,
 [data-color-scheme="dark"] .pv-outline-chip {
 	border-color: #6b8aff;
 	color: #6b8aff;
 }
 
-body.dark-mode .pv-outline-chip:hover,
-body.dark .pv-outline-chip:hover,
-body.night-mode .pv-outline-chip:hover,
-html.dark .pv-outline-chip:hover,
-html.dark-mode .pv-outline-chip:hover,
 [data-theme="dark"] .pv-outline-chip:hover,
 [data-color-scheme="dark"] .pv-outline-chip:hover {
 	background: #6b8aff;
 	color: #fff;
 }
 
-body.dark-mode .pv-outline-chip .pv-chip-count,
-body.dark .pv-outline-chip .pv-chip-count,
-body.night-mode .pv-outline-chip .pv-chip-count,
-html.dark .pv-outline-chip .pv-chip-count,
-html.dark-mode .pv-outline-chip .pv-chip-count,
-[data-theme="dark"] .pv-outline-chip .pv-chip-count,
-[data-color-scheme="dark"] .pv-outline-chip .pv-chip-count {
-	background: rgba(107, 138, 255, 0.15);
+[data-theme="dark"] .pv-neon-pill,
+[data-color-scheme="dark"] .pv-neon-pill {
+	background: #020617;
+	border-color: #22d3ee;
+}
+
+[data-theme="dark"] .pv-solid-dark-pill,
+[data-color-scheme="dark"] .pv-solid-dark-pill {
+	background: #111827;
+	border-color: #4b5563;
+}
+
+[data-theme="dark"] .pv-sunset-pill,
+[data-color-scheme="dark"] .pv-sunset-pill {
+	box-shadow: 0 4px 15px rgba(255, 94, 98, 0.45);
 }

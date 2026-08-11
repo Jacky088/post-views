@@ -258,7 +258,14 @@ class PostViews_Display {
 	public static function get_totalviews( $display = true ) {
 		global $wpdb;
 
-		$total_views = (int) $wpdb->get_var( "SELECT SUM(meta_value+0) FROM $wpdb->postmeta WHERE meta_key = 'views'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Cache the aggregate so the full-table SUM is not re-run on every call
+		// (it is typically rendered in a footer or stats area). Hourly refresh.
+		$cache_key   = 'postviews_total_views';
+		$total_views = get_transient( $cache_key );
+		if ( false === $total_views ) {
+			$total_views = (int) $wpdb->get_var( "SELECT SUM(meta_value+0) FROM $wpdb->postmeta WHERE meta_key = 'views'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			set_transient( $cache_key, $total_views, HOUR_IN_SECONDS );
+		}
 
 		if ( ! $display ) {
 			return $total_views;
