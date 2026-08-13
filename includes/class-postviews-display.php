@@ -24,11 +24,56 @@ class PostViews_Display {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_filter( 'the_content', array( __CLASS__, 'append_to_content' ) );
 
-		// Third-party themes (JustNews) that render kuaixun detail pages through
-		// the_excerpt() never hit the_content, so the auto-append above cannot
-		// reach them. This hook injects the count into the kuaixun excerpt when
-		// the dedicated option is on.
-		add_filter( 'the_excerpt', array( __CLASS__, 'append_kuaixun_views_to_excerpt' ) );
+		// JustNews renders kuaixun detail pages through the_excerpt() rather
+		// than the_content(), and the the_excerpt path proved unreliable on the
+		// production site (some hook ordering or excerpt empty-state causes our
+		// filter callback to be skipped). The fallback is a tiny DOM injector
+		// that runs on the front end once the kuaixun page has loaded.
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_kuaixun_injector' ) );
+	}
+
+	/**
+	 * Enqueue the kuaixun injector on kuaixun detail pages.
+	 *
+	 * The script is only registered/enqueued when the switch is on and the
+	 * current request is a singular kuaixun view. It receives the post id
+	 * and view count as a localized data blob and appends an inline span
+	 * after the theme's .entry-content container. No positioning, no wrapper.
+	 *
+	 * @return void
+	 */
+	public static function maybe_enqueue_kuaixun_injector() {
+		if ( ! is_singular( 'kuaixun' ) ) {
+			return;
+		}
+		if ( 1 !== PostViews_Options::get_int( 'display_kuaixun_views' ) ) {
+			return;
+		}
+
+		$post_id = (int) get_queried_object_id();
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		$count = (int) get_post_meta( $post_id, 'views', true );
+
+		wp_register_script(
+			'post-views-kuaixun',
+			plugins_url( 'postviews-kuaixun.js', WP_POSTVIEWS_MAIN_FILE ),
+			array(),
+			WP_POSTVIEWS_VERSION,
+			true
+		);
+
+		wp_enqueue_script( 'post-views-kuaixun' );
+		wp_localize_script(
+			'post-views-kuaixun',
+			'PostViewsKuaixun',
+			array(
+				'post_id' => $post_id,
+				'count'   => $count,
+			)
+		);
 	}
 
 	/**
@@ -79,42 +124,6 @@ class PostViews_Display {
 		$positioned_views = '<div class="pv-positioned-wrapper">' . $views_html . '</div>';
 
 		return $content . $positioned_views;
-	}
-
-	/**
-	 * Append the view count to a kuaixun detail page excerpt.
-	 *
-	 * JustNews renders kuaixun single pages through the_excerpt() rather than
-	 * the_content(), so append_to_content() never runs there. When the
-	 * display_kuaixun_views option is on, this appends a lightweight
-	 * theme-styled count to the excerpt. Deliberately scoped to singular
-	 * kuaixun pages: listing loops that call the_excerpt() elsewhere are left
-	 * untouched, and the plain markup avoids the positioned-wrapper behaviour
-	 * that previously broke the kuaixun layout.
-	 *
-	 * @param string $excerpt The post excerpt.
-	 * @return string
-	 */
-	public static function append_kuaixun_views_to_excerpt( $excerpt ) {
-		if ( 1 !== PostViews_Options::get_int( 'display_kuaixun_views' ) ) {
-			return $excerpt;
-		}
-
-		if ( ! is_singular( 'kuaixun' ) ) {
-			return $excerpt;
-		}
-
-		$count = (int) get_post_meta( get_the_ID(), 'views', true );
-
-		// A minimal inline eye icon (SVG) plus the count, styled to blend with
-		// the theme's own meta labels. Reuses the theme's item-meta-li class
-		// name so any theme CSS that targets it applies.
-		$html = '<span class="item-meta-li views kx-views">'
-			. '<svg class="kx-views-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-			. number_format_i18n( $count )
-			. '</span>';
-
-		return $excerpt . $html;
 	}
 
 	/**

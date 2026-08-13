@@ -141,75 +141,56 @@ class Test_PostViews_Compat extends PostViews_TestCase {
 	}
 
 	/**
-	 * The kuaixun excerpt appends a count only when the option is on.
+	 * The injector script is enqueued on singular kuaixun views.
 	 *
-	 * JustNews renders kuaixun detail pages via the_excerpt(), which the
-	 * plugin's the_content path cannot reach. The dedicated switch enables a
-	 * lightweight count appended to that excerpt.
+	 * JustNews renders kuaixun detail pages through the_excerpt(), which the
+	 * plugin's the_content filter cannot reach. The fallback path enqueues a
+	 * small DOM injector that appends the count after .entry-content.
 	 *
 	 * @return void
 	 */
-	public function test_kuaixun_excerpt_appends_views_when_enabled() {
+	public function test_kuaixun_injector_enqueued_on_singular_kuaixun() {
+		register_post_type( 'kuaixun' );
+
+		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), 123456 );
+		$this->set_context( array( 'is_singular', 'is_single' ), $post_id );
+		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
+
+		PostViews_Display::maybe_enqueue_kuaixun_injector();
+
+		$this->assertTrue( wp_script_is( 'post-views-kuaixun', 'enqueued' ) );
+	}
+
+	/**
+	 * The injector is not enqueued on other post types.
+	 *
+	 * @return void
+	 */
+	public function test_kuaixun_injector_skipped_on_other_post_types() {
+		register_post_type( 'kuaixun' );
+
+		$post_id = $this->make_post( array(), 123456 );
+		$this->set_context( array( 'is_singular', 'is_single' ), $post_id );
+		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
+
+		PostViews_Display::maybe_enqueue_kuaixun_injector();
+
+		$this->assertFalse( wp_script_is( 'post-views-kuaixun', 'enqueued' ) );
+	}
+
+	/**
+	 * The injector is not enqueued while the switch is off.
+	 *
+	 * @return void
+	 */
+	public function test_kuaixun_injector_skipped_when_switch_off() {
 		register_post_type( 'kuaixun' );
 
 		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), 123456 );
 		$this->set_context( array( 'is_singular', 'is_single' ), $post_id );
 
-		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
+		PostViews_Display::maybe_enqueue_kuaixun_injector();
 
-		$excerpt = apply_filters( 'the_excerpt', 'The quick update.' );
-
-		$this->assertStringContainsString( 'kx-views', $excerpt );
-		$this->assertStringContainsString( '123,456', $excerpt );
-		$this->assertStringContainsString( 'The quick update.', $excerpt );
-	}
-
-	/**
-	 * The kuaixun excerpt is untouched while the option is off.
-	 *
-	 * @return void
-	 */
-	public function test_kuaixun_excerpt_untouched_when_disabled() {
-		register_post_type( 'kuaixun' );
-
-		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), 500 );
-		$this->set_context( array( 'is_singular', 'is_single' ), $post_id );
-
-		$this->assertSame( 'The quick update.', apply_filters( 'the_excerpt', 'The quick update.' ) );
-	}
-
-	/**
-	 * Non-kuaixun singular pages never get the appended count.
-	 *
-	 * @return void
-	 */
-	public function test_kuaixun_excerpt_skips_other_post_types() {
-		register_post_type( 'kuaixun' );
-
-		$post_id = $this->make_post( array(), 500 );
-		$this->set_context( array( 'is_singular', 'is_single' ), $post_id );
-
-		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
-
-		$this->assertSame( 'A normal post.', apply_filters( 'the_excerpt', 'A normal post.' ) );
-	}
-
-	/**
-	 * A kuaixun excerpt on a non-singular page (listing) is left alone.
-	 *
-	 * the_excerpt() is also the standard listing summary, so the scoping has
-	 * to be tight enough not to stamp a count onto every card.
-	 *
-	 * @return void
-	 */
-	public function test_kuaixun_excerpt_skips_listing_context() {
-		register_post_type( 'kuaixun' );
-
-		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), 500 );
-		$this->set_context( array(), $post_id );
-
-		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
-
-		$this->assertSame( 'The quick update.', apply_filters( 'the_excerpt', 'The quick update.' ) );
+		$this->assertFalse( wp_script_is( 'post-views-kuaixun', 'enqueued' ) );
 	}
 }

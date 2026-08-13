@@ -148,11 +148,13 @@ JustNews 的快讯单页模板（`single-kuaixun.php`）通过 `the_excerpt` 输
 
 ## 更新日志
 
+### 2.0.10
+- 修复 v2.0.9 快讯详情页标签不显示的问题：实测发现 `the_excerpt` 过滤器在生产环境的 JustNews 主题下未能触发（具体原因涉及主题层 hook 处理），改用前端 DOM 注入：开启「快讯详情页显示浏览量」后，会在快讯详情页加载一段小 JS，自动在内容区后追加一个 inline 浏览量标签
+- 新增 `postviews-kuaixun.js` 前端脚本 + `maybe_enqueue_kuaixun_injector()` 调度方法
+- 彻底移除 v2.0.9 的 `the_excerpt` 过滤器及相关调试代码
+
 ### 2.0.9
-- 新增「快讯详情页显示浏览量」开关：JustNews 快讯（kuaixun）单页模板通过 `the_excerpt` 输出内容，无法走常规 `the_content` 追加。开启后会在快讯详情页内容末尾追加一个轻量的浏览量标签（含眼睛图标）
-- 开启开关后，kuaixun 同时参与浏览量计数，确保数字随访问增长
-- 新增 `the_excerpt` 过滤器 + 前端 `.kx-views` 样式，仅对 `is_singular('kuaixun')` 生效，不影响列表卡片与其他页面
-- 新增配套测试用例
+- 新增「快讯详情页显示浏览量」开关（早期实现，v2.0.10 替换为 DOM 注入）
 
 ### 2.0.8
 - 新增第三方主题兼容层（JustNews 等）：
