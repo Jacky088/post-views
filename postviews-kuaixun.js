@@ -16,6 +16,22 @@
 	var data = window.PostViewsKuaixun;
 	var count = parseInt( data.count, 10 ) || 0;
 
+	// Iron-clad proof that this script ran. If you can find a
+	// data-pv-kx-debug="loaded" on the page, the script reached this line.
+	// If you cannot, the script never executed (deferred, stripped by an
+	// optimizer, cached, or blocked by CSP).
+	var boot = document.createElement( 'div' );
+	boot.setAttribute( 'data-pv-kx-debug', 'loaded' );
+	boot.style.display = 'none';
+	(document.body || document.documentElement).appendChild( boot );
+
+	window.addEventListener( 'error', function ( e ) {
+		var d = document.createElement( 'div' );
+		d.setAttribute( 'data-pv-kx-debug', 'error:' + ( e.message || 'unknown' ) );
+		d.style.display = 'none';
+		document.body.appendChild( d );
+	} );
+
 	function format( n ) {
 		var s = String( n );
 		return s.replace( /\B(?=(\d{3})+(?!\d))/g, ',' );
