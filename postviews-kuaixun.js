@@ -4,23 +4,12 @@
  * JustNews renders kuaixun detail pages through the_excerpt(), which the
  * plugin's the_content / the_excerpt filters cannot reliably reach. This
  * script is enqueued only on singular kuaixun views when the dedicated
- * display_kuaixun_views switch is on, and appends a lightweight inline
- * span inside the theme's content container. No positioning, no wrapper,
- * no layout shifts.
+ * display_kuaixun_views switch is on, and inserts a small wrapped pill at
+ * the bottom-right of the article's content container. The wrapper is
+ * positioned absolutely so the label does not stretch or push the layout.
  */
 ( function () {
-	var bootMsg = '';
-
 	if ( typeof window.PostViewsKuaixun !== 'object' || ! window.PostViewsKuaixun ) {
-		bootMsg = 'NO_DATA';
-	} else {
-		bootMsg = 'DATA_OK count=' + window.PostViewsKuaixun.count;
-	}
-
-	// TEMP: visible diagnostic alert. Remove before release.
-	alert( 'PostViews KX debug: ' + bootMsg );
-
-	if ( bootMsg === 'NO_DATA' ) {
 		return;
 	}
 
@@ -51,7 +40,10 @@
 		return null;
 	}
 
-	function buildSpan() {
+	function buildPill() {
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'kx-views-wrap';
+
 		var span = document.createElement( 'span' );
 		span.className = 'item-meta-li views kx-views';
 		span.setAttribute( 'title', 'Views' );
@@ -79,23 +71,31 @@
 
 		span.appendChild( svg );
 		span.appendChild( document.createTextNode( format( count ) ) );
-		return span;
+		wrap.appendChild( span );
+		return wrap;
 	}
 
 	function inject() {
 		var target = pickTarget();
 		if ( ! target ) {
-			alert( 'PostViews KX: no-target' );
 			return;
 		}
-		if ( document.querySelector( '.kx-views' ) ) {
-			alert( 'PostViews KX: already-injected' );
+		if ( document.querySelector( '.kx-views-wrap' ) ) {
 			return;
 		}
 
-		var span = buildSpan();
-		target.parentNode.insertBefore( span, target.nextSibling );
-		alert( 'PostViews KX: injected OK after ' + target.tagName.toLowerCase() + '.' + ( target.className ? target.className.split( ' ' )[0] : '' ) );
+		var wrap = buildPill();
+		var parent = target.parentNode;
+
+		// The wrapper needs a positioned ancestor so absolute coords refer to
+		// the article block, not the viewport. If the parent is not already
+		// positioned, make it so without altering its visual size.
+		var parentPos = window.getComputedStyle( parent ).position;
+		if ( parentPos === 'static' ) {
+			parent.classList.add( 'kx-views-anchor' );
+		}
+
+		parent.appendChild( wrap );
 	}
 
 	if ( document.readyState === 'loading' ) {

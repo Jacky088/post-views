@@ -575,24 +575,88 @@ html.dark-mode {
  * A lightweight meta-style label appended to the excerpt. Inherits
  * the theme's item-meta-li look; no positioning, no wrapper.
  * ================================================================ */
+
+/* Position anchor added by JS so the absolute wrapper can use the article
+ * block as its origin instead of the viewport. */
+.kx-views-anchor {
+	position: relative;
+}
+
 .kx-views {
 	display: inline-flex;
 	align-items: center;
-	gap: 5px;
-	margin-left: 10px;
+	gap: 6px;
 	font-size: 14px;
-	color: #666;
+	color: #444;
 	vertical-align: middle;
 }
 
 .kx-views .kx-views-icon {
 	display: inline-block;
 	vertical-align: -2px;
-	color: inherit;
+	color: #667eea;
 }
 
 @media (prefers-color-scheme: dark) {
 	.kx-views {
-		color: #9ca3af;
+		color: #d1d1d6;
+	}
+	.kx-views .kx-views-icon {
+		color: #8b9eff;
+	}
+}
+
+/* ================================================================
+ * JustNews kuaixun bottom-right placement
+ * The wrap is positioned absolutely inside .entry-content's parent,
+ * sticking to the bottom-right corner without growing the layout.
+ * It must be a positioned sibling of .entry-content so its origin is
+ * the content box, not the viewport.
+ * ================================================================ */
+.kx-views-wrap {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	z-index: 5;
+	max-width: 70%;
+	pointer-events: none;
+}
+
+.kx-views-wrap .kx-views {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.92);
+	color: #444;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+	pointer-events: auto;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kx-views-wrap .kx-views .kx-views-icon {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	color: #667eea;
+}
+
+.kx-views-wrap .kx-views:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+	.kx-views-wrap .kx-views {
+		background: rgba(42, 42, 46, 0.92);
+		color: #e5e7eb;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+	}
+	.kx-views-wrap .kx-views .kx-views-icon {
+		color: #8b9eff;
 	}
 }

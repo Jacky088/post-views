@@ -148,10 +148,14 @@ JustNews 的快讯单页模板（`single-kuaixun.php`）通过 `the_excerpt` 输
 
 ## 更新日志
 
+### 2.0.11
+- 快讯详情页标签升级为右下角胶囊样式：圆角、白色背景、阴影、悬停动效、暗色模式适配
+- 改用 wrapper + span 两层结构，wrapper 绝对定位到 .entry-content 父容器右下角
+- JS 自动为父容器添加 .kx-views-anchor（position: relative）确保定位准确
+- 移除调试用 alert 弹窗，正式版注入逻辑
+
 ### 2.0.10
-- 修复 v2.0.9 快讯详情页标签不显示的问题：实测发现 `the_excerpt` 过滤器在生产环境的 JustNews 主题下未能触发（具体原因涉及主题层 hook 处理），改用前端 DOM 注入：开启「快讯详情页显示浏览量」后，会在快讯详情页加载一段小 JS，自动在内容区后追加一个 inline 浏览量标签
-- 新增 `postviews-kuaixun.js` 前端脚本 + `maybe_enqueue_kuaixun_injector()` 调度方法
-- 彻底移除 v2.0.9 的 `the_excerpt` 过滤器及相关调试代码
+- 修复 v2.0.9 快讯详情页标签不显示的问题：实测发现 `the_excerpt` 过滤器在生产环境的 JustNews 主题下未能触发，改用前端 DOM 注入
 
 ### 2.0.9
 - 新增「快讯详情页显示浏览量」开关（早期实现，v2.0.10 替换为 DOM 注入）
