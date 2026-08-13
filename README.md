@@ -124,13 +124,31 @@
 - 系统级：`prefers-color-scheme: dark`
 - 主题级：`body.dark`、`body.dark-mode`、`body.night-mode`、`html.dark`、`[data-theme="dark"]`、`[data-color-scheme="dark"]`
 
+## 第三方主题适配（JustNews 等）
+
+不少主题（如 JustNews）在后台提供「文章信息 → 阅读数」开关，并注明"需安装 WP-Postviews 插件"。这类主题通常不调用插件自身的输出函数，而是直接读取 `views` 数据，本插件已原生兼容：
+
+- **自动识别**：主题通过 `function_exists('the_views')` 探测插件是否启用，本插件提供 `the_views()`，探测成功。
+- **选项兼容**：主题调用 `get_option('views_options')`，本插件沿用同名选项，读取正常。
+- **显隐判断**：主题调用 `should_views_be_displayed( $views_options )`，本插件提供同名全局函数，按各页面类型的显示规则返回结果。
+- **列表卡片数字**：主题读取 `$post->views`，本插件通过 `the_posts` 过滤器批量填充，卡片上不会显示为 0。
+
+> 提示：启用后到主题后台勾选「阅读数」开关即可。若已勾选但仍不显示，请检查本插件「设置 → 内容类型」中是否勾选了对应文章类型，并清除缓存后重试。
+
 ## 兼容性
 
 - WordPress 6.0+
 - PHP 7.4+
 - 兼容主流缓存插件（WP Super Cache、W3 Total Cache、LiteSpeed Cache 等）
+- 适配 JustNews 等第三方主题：自动兼容原版 WP-Postviews 的 `should_views_be_displayed()` 接口与 `$post->views` 属性读取
 
 ## 更新日志
+
+### 2.0.8
+- 新增第三方主题兼容层（JustNews 等）：
+  - 恢复全局函数 `should_views_be_displayed( $options )`，兼容原版 WP-Postviews 的调用签名
+  - 新增 `the_posts` 过滤器，批量填充 `$post->views`，修复列表卡片阅读数恒为 0 的问题
+- 新增 `tests/test-compat.php`，覆盖兼容层行为
 
 ### 2.0.0
 - 9 种全新胶囊样式，视觉一致

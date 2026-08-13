@@ -3,7 +3,7 @@
  * Plugin Name: Post Views
  * Plugin URI: https://github.com/Jacky088/post-views
  * Description: 统计并展示文章/页面的浏览次数。
- * Version: 2.0.7
+ * Version: 2.0.8
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: 木木
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 // Version.
-define( 'WP_POSTVIEWS_VERSION', '2.0.7' );
+define( 'WP_POSTVIEWS_VERSION', '2.0.8' );
 define( 'WP_POSTVIEWS_MAIN_FILE', __FILE__ );
 
 // Block WordPress.org update checks for this plugin.
@@ -46,6 +46,7 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $li
 // Classes. Required at file load because the activation hook and the option
 // accessor are both reached before any action fires.
 require_once __DIR__ . '/includes/class-postviews-options.php';
+require_once __DIR__ . '/includes/compat.php';
 require_once __DIR__ . '/includes/class-postviews-display.php';
 require_once __DIR__ . '/includes/class-postviews-query.php';
 require_once __DIR__ . '/includes/class-postviews-counter.php';
