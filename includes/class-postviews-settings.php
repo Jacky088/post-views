@@ -466,7 +466,7 @@ class PostViews_Settings {
 							);
 							?>
 							<p class="description">
-								<?php esc_html_e( 'JustNews 主题的快讯（kuaixun）详情页通过 the_excerpt 输出内容，无法使用常规的 the_content 追加。开启后会在快讯详情页的内容末尾追加一个轻量的浏览量标签（含眼睛图标）。默认关闭。', 'post-views' ); ?>
+								<?php esc_html_e( 'JustNews 主题的快讯（kuaixun）详情页通过 the_excerpt 输出内容，无法使用常规的 the_content 追加。开启后会在快讯详情页右下角显示一个胶囊样式的浏览量标签（眼睛图标 + 数字）。默认关闭。注意：快讯页为固定样式，不随上方「浏览量显示样式」选择器变化。', 'post-views' ); ?>
 							</p>
 						</td>
 					</tr>
