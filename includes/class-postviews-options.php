@@ -88,6 +88,10 @@ class PostViews_Options {
 			'most_viewed_template' => self::default_template( 'most_viewed_template' ),
 			'template_style'       => 'minimal-line',
 			'enabled_post_types'   => array( 'post', 'page' ),
+			// 第三方主题（JustNews）的快讯单页模板绕过 the_content，走
+			// the_excerpt 输出内容。此开关在快讯详情页的 excerpt 末尾追加
+			// 阅读数标签。默认关闭，不影响既有布局。
+			'display_kuaixun_views' => 0,
 		);
 	}
 

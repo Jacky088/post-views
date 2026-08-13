@@ -569,3 +569,30 @@ html.dark-mode {
 [data-color-scheme="dark"] .pv-sunset-pill {
 	box-shadow: 0 4px 15px rgba(255, 94, 98, 0.45);
 }
+
+/* ================================================================
+ * JustNews kuaixun detail page count
+ * A lightweight meta-style label appended to the excerpt. Inherits
+ * the theme's item-meta-li look; no positioning, no wrapper.
+ * ================================================================ */
+.kx-views {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-left: 10px;
+	font-size: 14px;
+	color: #666;
+	vertical-align: middle;
+}
+
+.kx-views .kx-views-icon {
+	display: inline-block;
+	vertical-align: -2px;
+	color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+	.kx-views {
+		color: #9ca3af;
+	}
+}

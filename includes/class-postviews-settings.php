@@ -154,7 +154,7 @@ class PostViews_Settings {
 			}
 		}
 
-		foreach ( array( 'exclude_bots', 'use_ajax' ) as $key ) {
+		foreach ( array( 'exclude_bots', 'use_ajax', 'display_kuaixun_views' ) as $key ) {
 			if ( isset( $input[ $key ] ) ) {
 				$current[ $key ] = empty( $input[ $key ] ) ? 0 : 1;
 			}
@@ -447,6 +447,26 @@ class PostViews_Settings {
 							</fieldset>
 							<p class="description">
 								<?php esc_html_e( '选择要统计和显示浏览量的内容类型。默认包含文章（post）和页面（page）。', 'post-views' ); ?>
+							</p>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label for="views-display_kuaixun_views"><?php esc_html_e( '快讯详情页显示浏览量：', 'post-views' ); ?></label>
+						</th>
+						<td>
+							<?php
+							self::select(
+								'display_kuaixun_views',
+								array(
+									0 => __( '关闭', 'post-views' ),
+									1 => __( '开启', 'post-views' ),
+								)
+							);
+							?>
+							<p class="description">
+								<?php esc_html_e( 'JustNews 主题的快讯（kuaixun）详情页通过 the_excerpt 输出内容，无法使用常规的 the_content 追加。开启后会在快讯详情页的内容末尾追加一个轻量的浏览量标签（含眼睛图标）。默认关闭。', 'post-views' ); ?>
 							</p>
 						</td>
 					</tr>

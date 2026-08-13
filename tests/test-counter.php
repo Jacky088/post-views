@@ -702,4 +702,28 @@ class Test_PostViews_Counter extends PostViews_TestCase {
 			'delta' => (int) get_post_meta( $this->post_id, 'views', true ) - $before,
 		);
 	}
+
+	/**
+	 * kuaixun is counted only when display_kuaixun_views is on.
+	 *
+	 * The JustNews kuaixun post type is removed from the picker in the
+	 * settings screen, so by default the counter ignores it. The dedicated
+	 * switch is what re-enables counting, so the label on the detail page can
+	 * grow with traffic.
+	 *
+	 * @return void
+	 */
+	public function test_kuaixun_counted_only_when_kuaixun_switch_on() {
+		register_post_type( 'kuaixun' );
+
+		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), 0 );
+		$this->set_context( array( 'is_single', 'is_singular' ), $post_id );
+
+		// Default (switch off): no increment.
+		$this->assertSame( 0, $this->hit( $post_id ) );
+
+		// Switch on: increment works.
+		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
+		$this->assertSame( 1, $this->hit( $post_id ) );
+	}
 }

@@ -201,8 +201,14 @@ class PostViews_Counter {
 		if ( ! is_array( $enabled_types ) ) {
 			$enabled_types = array( 'post', 'page' );
 		}
+		// The kuaixun post type is intentionally absent from the picker (its
+		// template bypasses the_content), but the display_kuaixun_views switch
+		// lets JustNews users opt back into counting when they also want the
+		// label rendered on the detail page.
 		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
-			return;
+			if ( ! ( 'kuaixun' === $post->post_type && 1 === PostViews_Options::get_int( 'display_kuaixun_views' ) ) ) {
+				return;
+			}
 		}
 
 		if ( self::using_ajax() ) {
@@ -236,8 +242,14 @@ class PostViews_Counter {
 		if ( ! is_array( $enabled_types ) ) {
 			$enabled_types = array( 'post', 'page' );
 		}
+		// The kuaixun post type is intentionally absent from the picker (its
+		// template bypasses the_content), but the display_kuaixun_views switch
+		// lets JustNews users opt back into counting when they also want the
+		// label rendered on the detail page.
 		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
-			return;
+			if ( ! ( 'kuaixun' === $post->post_type && 1 === PostViews_Options::get_int( 'display_kuaixun_views' ) ) ) {
+				return;
+			}
 		}
 
 		if ( ! self::should_count( (int) $post->ID ) ) {
