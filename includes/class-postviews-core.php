@@ -22,8 +22,7 @@ class PostViews_Core {
 		add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'maybe_sort_by_views' ) );
 
-		add_action( 'publish_post', array( __CLASS__, 'seed_views_meta' ) );
-		add_action( 'publish_page', array( __CLASS__, 'seed_views_meta' ) );
+		add_action( 'transition_post_status', array( __CLASS__, 'seed_views_meta_on_transition' ), 10, 3 );
 
 		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_field' ) );
 	}
@@ -74,13 +73,15 @@ class PostViews_Core {
 	 * @return string
 	 */
 	public static function posts_fields( $content ) {
-		global $wpdb;
-
-		return $content . ", ($wpdb->postmeta.meta_value+0) AS views";
+		return $content . ', ( postviews_pm.meta_value + 0 ) AS views';
 	}
 
 	/**
 	 * Join postmeta.
+	 *
+	 * Joined under a dedicated alias: a query that already joins postmeta on
+	 * its own (a meta_query, for instance) would otherwise collide with the
+	 * bare table name and die on "Not unique table/alias".
 	 *
 	 * @param string $content The JOIN clause.
 	 * @return string
@@ -88,7 +89,7 @@ class PostViews_Core {
 	public static function posts_join( $content ) {
 		global $wpdb;
 
-		return $content . " LEFT JOIN $wpdb->postmeta ON $wpdb->postmeta.post_id = $wpdb->posts.ID";
+		return $content . " LEFT JOIN $wpdb->postmeta AS postviews_pm ON postviews_pm.post_id = $wpdb->posts.ID";
 	}
 
 	/**
@@ -98,9 +99,7 @@ class PostViews_Core {
 	 * @return string
 	 */
 	public static function posts_where( $content ) {
-		global $wpdb;
-
-		return $content . " AND $wpdb->postmeta.meta_key = 'views'";
+		return $content . " AND postviews_pm.meta_key = 'views'";
 	}
 
 	/**
@@ -139,6 +138,31 @@ class PostViews_Core {
 
 		// The $unique flag is what stops a republish resetting a real count.
 		add_post_meta( $post_id, 'views', 0, true );
+	}
+
+	/**
+	 * Seed the count when a post transitions to publish.
+	 *
+	 * Runs on the status transition rather than the publish_{type} hooks so
+	 * every enabled post type is seeded the same way, and so a type the site
+	 * switched off does not accumulate zero rows that would surface in the
+	 * least-viewed listings.
+	 *
+	 * @param string  $new_status New status.
+	 * @param string  $old_status Previous status.
+	 * @param WP_Post $post       The post.
+	 * @return void
+	 */
+	public static function seed_views_meta_on_transition( $new_status, $old_status, $post ) {
+		if ( 'publish' !== $new_status || ! $post instanceof WP_Post ) {
+			return;
+		}
+
+		if ( ! PostViews_Counter::is_countable_post_type( $post->post_type ) ) {
+			return;
+		}
+
+		self::seed_views_meta( $post->ID );
 	}
 
 	/**

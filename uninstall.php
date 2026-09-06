@@ -40,6 +40,18 @@ if ( ! function_exists( 'postviews_uninstall_site' ) ) {
 			delete_option( $option_name );
 		}
 
+		// The hourly aggregate and the rate-limit transients are the plugin's
+		// other footprint. The rate keys are per (IP, post) and therefore
+		// unbounded in number, so a LIKE sweep is the only way to catch them.
+		delete_transient( 'postviews_total_views' );
+
+		global $wpdb;
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			"DELETE FROM {$wpdb->options}
+			WHERE option_name LIKE '\\_transient\\_postviews\\_rate\\_%'
+			OR option_name LIKE '\\_transient\\_timeout\\_postviews\\_rate\\_%'"
+		);
+
 		// The core helper rather than a DELETE against $wpdb->postmeta: it does
 		// the same work and invalidates the post meta cache while it is at it.
 		delete_post_meta_by_key( 'views' );

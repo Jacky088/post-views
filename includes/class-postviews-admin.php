@@ -64,40 +64,71 @@ class PostViews_Admin {
 
 		global $wpdb;
 
-		// Step 1: Reset target views to 0.
-		// Only the published posts of public types that we are about to rewrite,
-		// not every 'views' row on the whole site. This keeps the bulk reset from
-		// touching other post statuses or unrelated meta.
-		$post_types = get_post_types( array( 'public' => true ) );
+		$post_types   = get_post_types( array( 'public' => true ) );
 		$placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
 
+		// Two statements instead of an update_post_meta() call per post: the
+		// per-post loop ran a full meta write for every published post and
+		// timed out on large sites. FLOOR( min + RAND() * ( max - min + 1 ) )
+		// is an integer in [min, max] because RAND() is in [0, 1). The old
+		// reset-to-zero step is gone: every published row is overwritten here,
+		// so the intermediate zero state bought nothing.
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE $wpdb->postmeta pm
 				INNER JOIN $wpdb->posts p ON p.ID = pm.post_id
-				SET pm.meta_value = '0'
+				SET pm.meta_value = FLOOR( %d + RAND() * ( %d - %d + 1 ) )
 				WHERE pm.meta_key = 'views'
 				AND p.post_status = 'publish'
-				AND p.post_type IN ($placeholders)",
+				AND p.post_type IN ($placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$min,
+				$max,
+				$min,
 				...array_values( $post_types )
 			)
 		);
 
-		// Step 2: Get all published posts of any public post type and write random views.
+		// Posts that never grew a 'views' row get one, which is what the old
+		// update_post_meta() loop created implicitly.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO $wpdb->postmeta ( post_id, meta_key, meta_value )
+				SELECT p.ID, 'views', FLOOR( %d + RAND() * ( %d - %d + 1 ) )
+				FROM $wpdb->posts p
+				WHERE p.post_status = 'publish'
+				AND p.post_type IN ($placeholders)
+				AND NOT EXISTS (
+					SELECT 1 FROM $wpdb->postmeta pm
+					WHERE pm.post_id = p.ID
+					AND pm.meta_key = 'views'
+				)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$min,
+				$max,
+				$min,
+				...array_values( $post_types )
+			)
+		);
+
+		// Direct $wpdb writes bypass the cache invalidation that
+		// update_post_meta() used to do, so the touched posts are cleaned up
+		// by hand.
 		$post_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT ID FROM $wpdb->posts
 				WHERE post_status = 'publish'
-				AND post_type IN ($placeholders)",
+				AND post_type IN ($placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				...array_values( $post_types )
 			)
 		);
 
-		if ( $post_ids ) {
-			foreach ( $post_ids as $post_id ) {
-				$random_views = wp_rand( $min, $max );
-				update_post_meta( (int) $post_id, 'views', $random_views );
-			}
+		foreach ( $post_ids as $post_id ) {
+			clean_post_cache( (int) $post_id );
+		}
+
+		// The aggregate and the rendered listings are now stale.
+		delete_transient( 'postviews_total_views' );
+		if ( function_exists( 'wp_cache_flush_group' ) ) {
+			wp_cache_flush_group( 'post-views' );
 		}
 
 		wp_safe_redirect( admin_url( 'options-general.php?page=post-views&synced=1' ) );

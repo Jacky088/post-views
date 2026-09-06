@@ -19,6 +19,29 @@ defined( 'ABSPATH' ) || exit;
 class PostViews_Query {
 
 	/**
+	 * Hook registration.
+	 *
+	 * @return void
+	 */
+	public static function init() {
+		// The rendered lists live in the 'post-views' cache group for an hour;
+		// saving a post flushes the group so a new or edited post can show up
+		// in the widgets without waiting out the TTL.
+		add_action( 'save_post', array( __CLASS__, 'flush_list_cache' ) );
+	}
+
+	/**
+	 * Drop the cached listing markup.
+	 *
+	 * @return void
+	 */
+	public static function flush_list_cache() {
+		if ( function_exists( 'wp_cache_flush_group' ) ) {
+			wp_cache_flush_group( 'post-views' );
+		}
+	}
+
+	/**
 	 * Run a listing and render it.
 	 *
 	 * @param array $args {
@@ -28,8 +51,8 @@ class PostViews_Query {
 	 *     @type int          $limit    Maximum number of posts.
 	 *     @type int          $chars    Truncate titles to this many characters. 0 disables.
 	 *     @type string       $order    'asc' for least viewed, 'desc' for most viewed.
-	 *     @type int|array    $category Category ID(s) to scope to, if any.
-	 *     @type int|array    $tag      Tag ID(s) to scope to, if any.
+	 *     @type int|array    $category Category ID(s) to scope to, if any. 0 or empty means unscoped.
+	 *     @type int|array    $tag      Tag ID(s) to scope to, if any. 0 or empty means unscoped.
 	 * }
 	 * @return string
 	 */
@@ -56,20 +79,40 @@ class PostViews_Query {
 			'meta_key'       => 'views', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		);
 
+		// A category or tag of 0 means "no filter", which is what the legacy
+		// signatures and the widget's empty-cat_ids fallback have always meant.
+		// Feeding 0 into category__in/tag__in would instead match nothing.
+		if ( null !== $args['category'] ) {
+			$category_ids = array_values( array_filter( array_map( 'absint', (array) $args['category'] ) ) );
+			if ( ! empty( $category_ids ) ) {
+				$query_args['category__in'] = $category_ids;
+			}
+		}
+		if ( null !== $args['tag'] ) {
+			$tag_ids = array_values( array_filter( array_map( 'absint', (array) $args['tag'] ) ) );
+			if ( ! empty( $tag_ids ) ) {
+				$query_args['tag__in'] = $tag_ids;
+			}
+		}
+
 		// Cache the rendered list so repeated widget/shortcode calls within the
 		// same request window (or any persistent object cache) do not re-run the
-		// meta_value_num query. Key is derived from the resolved arguments.
+		// meta_value_num query. The key is derived from the fully resolved
+		// arguments, scoping included: derived any earlier, a category-scoped
+		// list and an unscoped one with the same mode/limit/order would share
+		// an entry and render whichever ran first.
 		$cache_key = 'postviews_list_' . md5( wp_json_encode( $query_args ) );
 		$cached    = wp_cache_get( $cache_key, 'post-views' );
 		if ( false !== $cached ) {
 			return $cached;
 		}
 
-		if ( null !== $args['category'] ) {
-			$query_args['category__in'] = (array) $args['category'];
-		}
-		if ( null !== $args['tag'] ) {
-			$query_args['tag__in'] = (array) $args['tag'];
+		// wp_kses_post() at render, not just at save: the option row can also be
+		// written by PostViews_Options::save() or a direct update_option(),
+		// neither of which runs the settings screen's sanitize callback.
+		$template = wp_kses_post( (string) PostViews_Options::get( 'most_viewed_template', '' ) );
+		if ( '' === $template ) {
+			$template = PostViews_Options::default_template( 'most_viewed_template' );
 		}
 
 		$query  = new WP_Query( $query_args );
@@ -83,7 +126,7 @@ class PostViews_Query {
 
 		while ( $query->have_posts() ) {
 			$query->the_post();
-			$output .= self::render_item( (int) $args['chars'] );
+			$output .= self::render_item( (int) $args['chars'], $template );
 		}
 
 		wp_reset_postdata();
@@ -96,11 +139,12 @@ class PostViews_Query {
 	/**
 	 * Substitute every %TOKEN% for the post currently in the loop.
 	 *
-	 * @param int $chars Truncate the title to this many characters. 0 disables.
+	 * @param int    $chars    Truncate the title to this many characters. 0 disables.
+	 * @param string $template The kses-checked listing template.
 	 * @return string
 	 */
-	protected static function render_item( $chars ) {
-		$post_views = get_post_meta( get_the_ID(), 'views', true );
+	protected static function render_item( $chars, $template ) {
+		$post_views = (int) get_post_meta( get_the_ID(), 'views', true );
 
 		$post_title = get_the_title();
 		if ( $chars > 0 ) {
@@ -114,23 +158,26 @@ class PostViews_Query {
 		$tokens = array(
 			'%VIEW_COUNT%'         => number_format_i18n( $post_views ),
 			'%VIEW_COUNT_ROUNDED%' => PostViews_Display::round_number( $post_views ),
-			'%POST_TITLE%'         => $post_title,
+			// The default template puts the title in both text and attribute
+			// context, so it is escaped in a way that is safe for both. esc_html()
+			// is a no-op over snippet_text() output, which is already encoded.
+			'%POST_TITLE%'         => esc_html( $post_title ),
 			'%POST_EXCERPT%'       => get_the_excerpt(),
 			'%POST_CONTENT%'       => get_the_content(),
-			'%POST_URL%'           => get_permalink(),
+			'%POST_URL%'           => esc_url( get_permalink() ),
 			'%POST_DATE%'          => get_the_time( get_option( 'date_format' ) ),
 			'%POST_TIME%'          => get_the_time( get_option( 'time_format' ) ),
 			'%POST_THUMBNAIL%'     => (string) get_the_post_thumbnail( null, 'thumbnail' ),
 			// Returns false when the post has no thumbnail.
-			'%POST_THUMBNAIL_URL%' => (string) get_the_post_thumbnail_url( null, 'thumbnail' ),
+			'%POST_THUMBNAIL_URL%' => esc_url( (string) get_the_post_thumbnail_url( null, 'thumbnail' ) ),
 			'%POST_CATEGORY_ID%'   => $post_category_id,
-			'%POST_AUTHOR%'        => get_the_author(),
+			'%POST_AUTHOR%'        => esc_html( get_the_author() ),
 		);
 
 		return str_replace(
 			array_keys( $tokens ),
 			array_values( $tokens ),
-			(string) PostViews_Options::get( 'most_viewed_template', '' )
+			$template
 		);
 	}
 

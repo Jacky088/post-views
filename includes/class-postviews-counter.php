@@ -182,6 +182,30 @@ class PostViews_Counter {
 	}
 
 	/**
+	 * Whether a post type participates in counting.
+	 *
+	 * The kuaixun post type is intentionally absent from the picker (its
+	 * template bypasses the_content), but the display_kuaixun_views switch
+	 * lets JustNews users opt back into counting when they also want the
+	 * label rendered on the detail page.
+	 *
+	 * @param string $post_type Post type name.
+	 * @return bool
+	 */
+	public static function is_countable_post_type( $post_type ) {
+		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+		if ( ! is_array( $enabled_types ) ) {
+			$enabled_types = array( 'post', 'page' );
+		}
+
+		if ( in_array( $post_type, $enabled_types, true ) ) {
+			return true;
+		}
+
+		return 'kuaixun' === $post_type && 1 === PostViews_Options::get_int( 'display_kuaixun_views' );
+	}
+
+	/**
 	 * Count the view during wp_head, when there is no page cache in the way.
 	 *
 	 * @return void
@@ -196,19 +220,8 @@ class PostViews_Counter {
 			return;
 		}
 
-		// Check if current post type is enabled.
-		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
-		if ( ! is_array( $enabled_types ) ) {
-			$enabled_types = array( 'post', 'page' );
-		}
-		// The kuaixun post type is intentionally absent from the picker (its
-		// template bypasses the_content), but the display_kuaixun_views switch
-		// lets JustNews users opt back into counting when they also want the
-		// label rendered on the detail page.
-		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
-			if ( ! ( 'kuaixun' === $post->post_type && 1 === PostViews_Options::get_int( 'display_kuaixun_views' ) ) ) {
-				return;
-			}
+		if ( ! self::is_countable_post_type( $post->post_type ) ) {
+			return;
 		}
 
 		if ( self::using_ajax() ) {
@@ -237,19 +250,8 @@ class PostViews_Counter {
 			return;
 		}
 
-		// Check if current post type is enabled.
-		$enabled_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
-		if ( ! is_array( $enabled_types ) ) {
-			$enabled_types = array( 'post', 'page' );
-		}
-		// The kuaixun post type is intentionally absent from the picker (its
-		// template bypasses the_content), but the display_kuaixun_views switch
-		// lets JustNews users opt back into counting when they also want the
-		// label rendered on the detail page.
-		if ( ! in_array( $post->post_type, $enabled_types, true ) ) {
-			if ( ! ( 'kuaixun' === $post->post_type && 1 === PostViews_Options::get_int( 'display_kuaixun_views' ) ) ) {
-				return;
-			}
+		if ( ! self::is_countable_post_type( $post->post_type ) ) {
+			return;
 		}
 
 		if ( ! self::should_count( (int) $post->ID ) ) {
@@ -257,14 +259,14 @@ class PostViews_Counter {
 		}
 
 		wp_enqueue_script(
-			'post-views-cache',
+			'wp-postviews-cache',
 			plugins_url( 'postviews-cache.js', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
 			WP_POSTVIEWS_VERSION,
 			true
 		);
 		wp_localize_script(
-			'post-views-cache',
+			'wp-postviews-cache',
 			'viewsCacheL10n',
 			array(
 				'admin_ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -298,29 +300,53 @@ class PostViews_Counter {
 
 		$post_id = (int) sanitize_key( wp_unslash( $_POST['postviews_id'] ) );
 
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		$post = get_post( $post_id );
+
 		// update_post_meta() creates a row whether or not the post exists, so
-		// without this check a logged out visitor can walk the ID space and
-		// grow wp_postmeta without bound.
-		if ( $post_id <= 0 || ! get_post_status( $post_id ) ) {
+		// without an existence check a logged out visitor can walk the ID space
+		// and grow wp_postmeta without bound. Viewability is checked too: a
+		// draft or private post must not accrue views from the outside.
+		if ( ! $post instanceof WP_Post || ! is_post_status_viewable( $post->post_status ) ) {
+			return;
+		}
+
+		// The enqueue path already gated on the type and on should_count(), so a
+		// request from a legitimately served page passes both. Repeating them
+		// here is what stops a hand-built request from counting a type the site
+		// turned off, or a view the settings exclude.
+		if ( ! self::is_countable_post_type( $post->post_type ) ) {
+			return;
+		}
+
+		if ( ! self::should_count( $post_id ) ) {
 			return;
 		}
 
 		// 防刷：同一 IP 在短时间窗口内对同一文章只计一次自增。
 		// 不改变原有计数行为，仅在高频重复请求时跳过自增并返回当前值。
-		$client_ip    = self::get_client_ip();
-		$rate_key     = 'postviews_rate_' . md5( $client_ip . '|' . $post_id );
-		$rate_blocked = get_transient( $rate_key );
-		if ( false !== $rate_blocked ) {
-			$current_views = (int) get_post_meta( $post_id, 'views', true );
-			wp_send_json_success(
-				array(
-					'views'     => $current_views,
-					'throttled' => true,
-				)
-			);
+		// 窗口为 0 或负数时视为关闭限流（postviews_rate_limit_seconds 过滤器）。
+		$seconds = (int) apply_filters( 'postviews_rate_limit_seconds', 3 );
+
+		if ( $seconds > 0 ) {
+			$client_ip    = self::get_client_ip();
+			$rate_key     = 'postviews_rate_' . md5( $client_ip . '|' . $post_id );
+			$rate_blocked = get_transient( $rate_key );
+			if ( false !== $rate_blocked ) {
+				$current_views = (int) get_post_meta( $post_id, 'views', true );
+				wp_send_json_success(
+					array(
+						'views'     => $current_views,
+						'throttled' => true,
+					)
+				);
+			}
+			// 首次（或冷却已过）：记录冷却标记。
+			set_transient( $rate_key, time(), $seconds );
 		}
-		// 首次（或冷却已过）：记录 3 秒冷却标记。
-		set_transient( $rate_key, time(), 3 );
 
 		$post_views = self::increment( $post_id, 'postviews_increment_views_ajax' );
 
@@ -331,8 +357,11 @@ class PostViews_Counter {
 	 * Best-effort client IP for rate-limiting.
 	 *
 	 * Climbs the usual proxy headers in a defensive order and falls back to the
-	 * direct remote address. Not authoritative for security - IPs are spoofable -
-	 * but it is enough to blunt naive view-count inflation from a single host.
+	 * direct remote address. Not authoritative for security - on a direct
+	 * connection every one of these headers is client-controlled - but it is
+	 * enough to blunt naive view-count inflation from a single host. The
+	 * postviews_client_ip filter lets a site pin the key to REMOTE_ADDR, or to
+	 * a header its own proxy sets, when it wants the unforgeable value.
 	 *
 	 * @return string
 	 */
@@ -347,6 +376,7 @@ class PostViews_Counter {
 			'REMOTE_ADDR',
 		);
 
+		$found = '';
 		foreach ( $candidates as $key ) {
 			if ( empty( $_SERVER[ $key ] ) ) {
 				continue;
@@ -356,24 +386,64 @@ class PostViews_Counter {
 			$parts = explode( ',', $value );
 			$ip    = trim( $parts[0] );
 			if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-				return $ip;
+				$found = $ip;
+				break;
 			}
 		}
 
-		return '0.0.0.0';
+		if ( '' === $found ) {
+			$found = '0.0.0.0';
+		}
+
+		/**
+		 * Filters the client IP used to derive the rate-limit key.
+		 *
+		 * @param string $ip The best-effort client IP.
+		 */
+		return apply_filters( 'postviews_client_ip', $found );
 	}
 
 	/**
 	 * Add one to a post's view count.
+	 *
+	 * The bump is a single atomic UPDATE rather than a read-modify-write:
+	 * get_post_meta() then update_post_meta() loses a count whenever two
+	 * requests overlap on the same post.
 	 *
 	 * @param int    $post_id Post ID.
 	 * @param string $hook    Action fired with the new count.
 	 * @return int The new count.
 	 */
 	protected static function increment( $post_id, $hook ) {
-		$post_views = (int) get_post_meta( $post_id, 'views', true ) + 1;
+		global $wpdb;
 
-		update_post_meta( $post_id, 'views', $post_views );
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = 'views'",
+				$post_id
+			)
+		);
+
+		if ( ! $updated ) {
+			// No row to bump: seed one. If another request inserted it between
+			// the failed UPDATE and this insert, add_post_meta() with $unique
+			// fails and the UPDATE below adds this request's count on top.
+			if ( ! add_post_meta( $post_id, 'views', 1, true ) ) {
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = 'views'",
+						$post_id
+					)
+				);
+			}
+		}
+
+		// A direct $wpdb write bypasses the meta cache invalidation that
+		// update_post_meta() used to do, so the per-post entry is dropped
+		// before the new value is read back.
+		wp_cache_delete( $post_id, 'post_meta' );
+
+		$post_views = (int) get_post_meta( $post_id, 'views', true );
 
 		/**
 		 * Fires after a view has been recorded.

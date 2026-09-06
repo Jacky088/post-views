@@ -658,6 +658,11 @@ class Test_PostViews_Counter extends PostViews_TestCase {
 			define( 'DOING_AJAX', true );
 		}
 
+		// The nopriv endpoint is an anonymous surface. Make sure no user left
+		// signed in by a previous test can make the count-mode setting veto the
+		// increment for the wrong reason.
+		wp_set_current_user( 0 );
+
 		// The endpoint only does anything when a page cache is in play, which
 		// is why .wp-env.json defines WP_CACHE for the test environment.
 		$this->assertTrue(
@@ -725,5 +730,58 @@ class Test_PostViews_Counter extends PostViews_TestCase {
 		// Switch on: increment works.
 		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
 		$this->assertSame( 1, $this->hit( $post_id ) );
+	}
+
+	/**
+	 * The endpoint ignores a post that is not publicly viewable.
+	 *
+	 * A draft must not accrue views from the outside; a legitimate page never
+	 * produces a request against an unpublished ID.
+	 *
+	 * @return void
+	 */
+	public function test_ajax_endpoint_ignores_unviewable_posts() {
+		$draft_id = self::factory()->post->create( array( 'post_status' => 'draft' ) );
+
+		$response = $this->call_ajax( (string) $draft_id );
+
+		$this->assertSame( 0, $response['delta'] );
+		$this->assertSame( '', (string) get_post_meta( $draft_id, 'views', true ) );
+	}
+
+	/**
+	 * A second hit inside the throttle window is reported but not counted.
+	 *
+	 * @return void
+	 */
+	public function test_ajax_endpoint_throttles_repeat_hits() {
+		$post_id = $this->make_post( array( 'post_title' => 'Throttled' ), 10 );
+
+		$this->call_ajax( (string) $post_id );
+		$response = $this->call_ajax( (string) $post_id );
+
+		$this->assertSame( 11, (int) get_post_meta( $post_id, 'views', true ) );
+		$this->assertTrue( $response['json']['data']['throttled'] );
+	}
+
+	/**
+	 * The endpoint honours the kuaixun switch, the same gate the enqueue path
+	 * applies.
+	 *
+	 * @return void
+	 */
+	public function test_ajax_endpoint_honours_the_kuaixun_switch() {
+		register_post_type( 'kuaixun' );
+		$post_id = $this->make_post( array( 'post_type' => 'kuaixun' ), null );
+
+		// Switch off: the endpoint does nothing and creates no meta row.
+		$this->call_ajax( (string) $post_id );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'views', true ) );
+
+		// Switch on: the view counts. Reaching this also proves the rejected
+		// call above left no throttle transient behind.
+		$this->set_options( array( 'display_kuaixun_views' => 1 ) );
+		$this->call_ajax( (string) $post_id );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, 'views', true ) );
 	}
 }

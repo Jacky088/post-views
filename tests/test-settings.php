@@ -337,4 +337,56 @@ class Test_PostViews_Settings extends PostViews_TestCase {
 			$this->assertStringContainsString( $hidden_field, $html );
 		}
 	}
+
+	/**
+	 * A custom template survives a save that did not change the style.
+	 *
+	 * The style preset used to be stamped over the template on every save,
+	 * which silently reverted anything typed into the custom template field.
+	 *
+	 * @return void
+	 */
+	public function test_custom_template_survives_a_save_without_a_style_change() {
+		$this->set_options(
+			array(
+				'template_style' => 'minimal-line',
+				'template'       => '<i>custom</i>',
+			)
+		);
+
+		$sanitized = PostViews_Settings::sanitize(
+			array(
+				'template_style' => 'minimal-line',
+				'template'       => '<b>mine</b>',
+			)
+		);
+
+		$this->assertSame( '<b>mine</b>', $sanitized['template'] );
+	}
+
+	/**
+	 * Switching styles still applies the new preset over a custom template.
+	 *
+	 * @return void
+	 */
+	public function test_switching_styles_applies_the_preset() {
+		$this->set_options(
+			array(
+				'template_style' => 'minimal-line',
+				'template'       => '<b>mine</b>',
+			)
+		);
+
+		$sanitized = PostViews_Settings::sanitize(
+			array(
+				'template_style' => 'stat-box',
+				'template'       => '<b>mine</b>',
+			)
+		);
+
+		$styles = PostViews_Options::template_styles();
+
+		$this->assertSame( 'stat-box', $sanitized['template_style'] );
+		$this->assertSame( $styles['stat-box'], $sanitized['template'] );
+	}
 }

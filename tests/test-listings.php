@@ -463,4 +463,81 @@ class Test_PostViews_Listings extends PostViews_TestCase {
 			get_least_viewed( 'post', 1, 0, false )
 		);
 	}
+
+	/**
+	 * Scoped and unscoped listings never share a cache entry.
+	 *
+	 * The cache key used to be derived before the category and tag arguments
+	 * were merged into the query args, so a category-scoped list and an
+	 * unscoped one with the same mode/limit/order rendered whichever ran first.
+	 *
+	 * @return void
+	 */
+	public function test_scoped_and_unscoped_listings_do_not_share_a_cache_entry() {
+		$scoped = PostViews_Query::render(
+			array(
+				'mode'     => 'post',
+				'limit'    => 10,
+				'order'    => 'desc',
+				'category' => $this->cats['b'],
+			)
+		);
+		$plain  = PostViews_Query::render(
+			array(
+				'mode'  => 'post',
+				'limit' => 10,
+				'order' => 'desc',
+			)
+		);
+
+		// Beta holds only High and Huge.
+		$this->assertStringContainsString( 'High Post', $scoped );
+		$this->assertStringContainsString( 'Huge Post', $scoped );
+		$this->assertStringNotContainsString( 'Low Post', $scoped );
+		$this->assertStringNotContainsString( 'Mid Post', $scoped );
+
+		// Unscoped includes the Alpha posts the scoped list lacks.
+		$this->assertStringContainsString( 'High Post', $plain );
+		$this->assertStringContainsString( 'Huge Post', $plain );
+		$this->assertStringContainsString( 'Mid Post', $plain );
+		$this->assertStringContainsString( 'Low Post', $plain );
+	}
+
+	/**
+	 * A category of 0 means "no filter", as the legacy signature documented.
+	 *
+	 * Feeding 0 into category__in used to match nothing at all, so the default
+	 * arguments of get_most_viewed_category() listed nothing.
+	 *
+	 * @return void
+	 */
+	public function test_a_zero_category_is_unscoped() {
+		$this->assertSame(
+			$this->listed_titles( get_most_viewed( 'post', 10, 0, false ) ),
+			$this->listed_titles( get_most_viewed_category( 0, 'post', 10, 0, false ) )
+		);
+	}
+
+	/**
+	 * Token values are escaped for the template's markup context.
+	 *
+	 * The default template puts %POST_TITLE% into an attribute, so a quote in
+	 * a title must not be able to break out of it.
+	 *
+	 * @return void
+	 */
+	public function test_token_values_are_escaped() {
+		// Above Huge Post's 2,500,000, so this post heads the single-item list.
+		$this->make_post( array( 'post_title' => 'He said "hi"' ), 9000000 );
+		$this->set_options(
+			array(
+				'most_viewed_template' => '<a href="%POST_URL%" title="%POST_TITLE%">%POST_TITLE%</a>',
+			)
+		);
+
+		$output = get_most_viewed( 'post', 1, 0, false );
+
+		$this->assertStringNotContainsString( '"hi"', $output );
+		$this->assertStringContainsString( '&quot;hi&quot;', $output );
+	}
 }

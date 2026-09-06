@@ -182,11 +182,24 @@ class PostViews_Options {
 	/**
 	 * Replace the whole option.
 	 *
+	 * The two HTML templates are kses-filtered here: save() is the
+	 * programmatic write path and never sees the settings screen's sanitize
+	 * callback, so this is what keeps a caller from storing markup the render
+	 * path would have to trust.
+	 *
 	 * @param array $values Full option array.
 	 * @return bool
 	 */
 	public static function save( $values ) {
-		self::$cache = array_merge( self::defaults(), (array) $values );
+		$values = (array) $values;
+
+		foreach ( array( 'template', 'most_viewed_template' ) as $key ) {
+			if ( isset( $values[ $key ] ) && is_string( $values[ $key ] ) ) {
+				$values[ $key ] = wp_kses_post( $values[ $key ] );
+			}
+		}
+
+		self::$cache = array_merge( self::defaults(), $values );
 
 		return update_option( self::OPTION, self::$cache );
 	}

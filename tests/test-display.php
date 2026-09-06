@@ -482,4 +482,14 @@ class Test_PostViews_Display extends PostViews_TestCase {
 
 		$this->assertSame( '500 views', do_shortcode( '[views id="abc"]' ) );
 	}
+
+	/**
+	 * Single quotes are encoded, so a title cannot break out of a
+	 * single-quoted attribute in a custom template.
+	 *
+	 * @return void
+	 */
+	public function test_snippet_text_encodes_single_quotes() {
+		$this->assertSame( 'O&#039;Hara', PostViews_Display::snippet_text( "O'Hara", 50 ) );
+	}
 }

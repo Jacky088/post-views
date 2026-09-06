@@ -201,10 +201,13 @@ class PostViews_Display {
 			}
 		}
 
+		// wp_kses_post() at render, not just at save: the option row can also be
+		// written by PostViews_Options::save() or a direct update_option(),
+		// neither of which runs the settings screen's sanitize callback.
 		return str_replace(
 			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%' ),
 			array( number_format_i18n( $post_views ), self::round_number( $post_views ) ),
-			(string) PostViews_Options::get( 'template', '' )
+			wp_kses_post( (string) PostViews_Options::get( 'template', '' ) )
 		);
 	}
 
@@ -281,6 +284,10 @@ class PostViews_Display {
 	 * mid-character became invalid UTF-8 and htmlentities() returned an empty
 	 * string, so the title vanished entirely.
 	 *
+	 * Encoding uses ENT_QUOTES rather than ENT_COMPAT: a title that survives
+	 * into a single-quoted template attribute would otherwise carry a raw
+	 * apostrophe and break out of the attribute.
+	 *
 	 * @param string $text   The title.
 	 * @param int    $length Maximum length in characters. 0 disables truncation.
 	 * @return string
@@ -297,7 +304,7 @@ class PostViews_Display {
 			$trimmed  = $too_long ? substr( $text, 0, $length ) : $text;
 		}
 
-		return htmlentities( $trimmed, ENT_COMPAT, $charset ) . ( $too_long ? '...' : '' );
+		return htmlentities( $trimmed, ENT_QUOTES, $charset ) . ( $too_long ? '...' : '' );
 	}
 
 	/**

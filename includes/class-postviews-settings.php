@@ -111,14 +111,14 @@ class PostViews_Settings {
 		);
 
 		wp_enqueue_script(
-			'post-views-admin',
+			'wp-postviews-admin',
 			plugins_url( 'postviews-admin.js', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
 			WP_POSTVIEWS_VERSION,
 			true
 		);
 		wp_localize_script(
-			'post-views-admin',
+			'wp-postviews-admin',
 			'postviewsAdminL10n',
 			array(
 				'defaults' => array(
@@ -170,10 +170,19 @@ class PostViews_Settings {
 		if ( isset( $input['template_style'] ) ) {
 			$styles = array_keys( PostViews_Options::template_styles() );
 			if ( in_array( $input['template_style'], $styles, true ) ) {
+				$style_changed             = $input['template_style'] !== $current['template_style'];
 				$current['template_style'] = $input['template_style'];
-				// Update the template content when style changes.
-				$all_styles = PostViews_Options::template_styles();
-				$current['template'] = $all_styles[ $input['template_style'] ];
+
+				// Stamp the chosen preset over the single-post template only
+				// when the user actually switched styles, or the template is
+				// empty, or it is itself one of the presets. Stamping it on
+				// every save silently discarded whatever was typed into the
+				// custom template field, which made that field unusable.
+				$stored_template = trim( (string) $current['template'] );
+				$all_styles      = PostViews_Options::template_styles();
+				if ( $style_changed || '' === $stored_template || in_array( $stored_template, $all_styles, true ) ) {
+					$current['template'] = $all_styles[ $input['template_style'] ];
+				}
 			}
 		}
 
@@ -396,6 +405,12 @@ class PostViews_Settings {
 									border-color: #2271b1;
 									background: #f0f6fc;
 								}
+								/* Keyboard users: the radio is visually hidden, so the
+								 * preview card carries the focus outline. */
+								.pv-style-option input[type="radio"]:focus-visible + .pv-style-preview {
+									outline: 2px solid #2271b1;
+									outline-offset: 2px;
+								}
 								.pv-style-option:hover .pv-style-preview {
 									border-color: #2271b1;
 								}
@@ -479,7 +494,7 @@ class PostViews_Settings {
 						<td>
 							<input type="text" class="large-text code" id="views-template-template" name="<?php echo esc_attr( $option . '[template]' ); ?>" value="<?php echo esc_attr( PostViews_Options::get( 'template', '' ) ); ?>" />
 							<p class="description">
-								<?php esc_html_e( '如需完全自定义HTML，可在此处修改。留空则使用上方选择的样式。', 'post-views' ); ?>
+								<?php esc_html_e( '如需完全自定义HTML，可在此处修改。留空则前台不输出浏览量标签；此处内容不会被上方样式选择覆盖（仅切换样式时更新）。', 'post-views' ); ?>
 							</p>
 							<p>
 								<button type="button" class="button" data-postviews-reset="template" data-postviews-target="views-template-template">
