@@ -73,7 +73,7 @@ class PostViews_Core {
 	 * @return string
 	 */
 	public static function posts_fields( $content ) {
-		return $content . ', ( postviews_pm.meta_value + 0 ) AS views';
+		return $content . ', ( COALESCE( postviews_pm.meta_value, 0 ) + 0 ) AS views';
 	}
 
 	/**
@@ -83,23 +83,29 @@ class PostViews_Core {
 	 * its own (a meta_query, for instance) would otherwise collide with the
 	 * bare table name and die on "Not unique table/alias".
 	 *
+	 * The meta_key condition lives on the ON clause rather than WHERE so
+	 * unviewed posts remain in the result set with a zero count.
+	 *
 	 * @param string $content The JOIN clause.
 	 * @return string
 	 */
 	public static function posts_join( $content ) {
 		global $wpdb;
 
-		return $content . " LEFT JOIN $wpdb->postmeta AS postviews_pm ON postviews_pm.post_id = $wpdb->posts.ID";
+		return $content . " LEFT JOIN $wpdb->postmeta AS postviews_pm ON ( postviews_pm.post_id = $wpdb->posts.ID AND postviews_pm.meta_key = 'views' )";
 	}
 
 	/**
 	 * Restrict the joined rows to the views key.
 	 *
+	 * Preserved as a no-op filter hook so existing filters and hook removers
+	 * remain unbroken.
+	 *
 	 * @param string $content The WHERE clause.
 	 * @return string
 	 */
 	public static function posts_where( $content ) {
-		return $content . " AND postviews_pm.meta_key = 'views'";
+		return $content;
 	}
 
 	/**
@@ -171,8 +177,13 @@ class PostViews_Core {
 	 * @return void
 	 */
 	public static function register_rest_field() {
+		$post_types = PostViews_Options::get( 'enabled_post_types', array( 'post', 'page' ) );
+		if ( ! is_array( $post_types ) || empty( $post_types ) ) {
+			$post_types = array( 'post', 'page' );
+		}
+
 		register_rest_field(
-			'post',
+			$post_types,
 			'views',
 			array(
 				'get_callback' => array( __CLASS__, 'rest_get_views' ),

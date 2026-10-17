@@ -64,20 +64,40 @@ class PostViews_Query {
 				'limit'    => 10,
 				'chars'    => 0,
 				'order'    => 'desc',
+				'period'   => 'all',
 				'category' => null,
 				'tag'      => null,
 			)
 		);
 
+		$period     = sanitize_key( (string) $args['period'] );
 		$query_args = array(
 			'post_type'      => ( empty( $args['mode'] ) || 'both' === $args['mode'] ) ? 'any' : $args['mode'],
 			'posts_per_page' => (int) $args['limit'],
-			'orderby'        => 'meta_value_num',
 			'order'          => $args['order'],
-			// A meta_key filter is what excludes posts that have never been
-			// viewed. Removing it would list them all at zero.
-			'meta_key'       => 'views', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		);
+
+		if ( 'all' !== $period && in_array( $period, array( 'today', 'week', 'month' ), true ) ) {
+			$post_type = ( empty( $args['mode'] ) || 'both' === $args['mode'] ) ? 'post' : $args['mode'];
+			$top_ids   = PostViews_Stats::get_top_post_ids(
+				array(
+					'period'    => $period,
+					'limit'     => (int) $args['limit'],
+					'order'     => $args['order'],
+					'post_type' => $post_type,
+				)
+			);
+
+			if ( empty( $top_ids ) ) {
+				return '<li>' . __( '暂无数据', 'post-views' ) . '</li>' . "\n";
+			}
+
+			$query_args['post__in'] = $top_ids;
+			$query_args['orderby']  = 'post__in';
+		} else {
+			$query_args['orderby']  = 'meta_value_num';
+			$query_args['meta_key'] = 'views'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		}
 
 		// A category or tag of 0 means "no filter", which is what the legacy
 		// signatures and the widget's empty-cat_ids fallback have always meant.
@@ -155,9 +175,15 @@ class PostViews_Query {
 		$categories       = get_the_category();
 		$post_category_id = empty( $categories ) ? 0 : $categories[0]->term_id;
 
+		$stats         = PostViews_Display::get_reading_stats( get_the_ID() );
+		$read_time_str = sprintf( _n( '%d 分钟', '%d 分钟', $stats['minutes'], 'post-views' ), $stats['minutes'] );
+		$words_str     = number_format_i18n( $stats['words'] );
+
 		$tokens = array(
 			'%VIEW_COUNT%'         => number_format_i18n( $post_views ),
 			'%VIEW_COUNT_ROUNDED%' => PostViews_Display::round_number( $post_views ),
+			'%READ_TIME%'          => $read_time_str,
+			'%WORD_COUNT%'         => $words_str,
 			// The default template puts the title in both text and attribute
 			// context, so it is escaped in a way that is safe for both. esc_html()
 			// is a no-op over snippet_text() output, which is already encoded.

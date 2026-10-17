@@ -40,6 +40,7 @@ class PostViews_Widget extends WP_Widget {
 		return array(
 			'title'   => __( '浏览量', 'post-views' ),
 			'type'    => 'most_viewed',
+			'period'  => 'all',
 			'mode'    => '',
 			'limit'   => 10,
 			'chars'   => 200,
@@ -68,9 +69,10 @@ class PostViews_Widget extends WP_Widget {
 		}
 
 		$listing = array(
-			'mode'  => (string) $instance['mode'],
-			'limit' => (int) $instance['limit'],
-			'chars' => (int) $instance['chars'],
+			'mode'   => (string) $instance['mode'],
+			'period' => (string) $instance['period'],
+			'limit'  => (int) $instance['limit'],
+			'chars'  => (int) $instance['chars'],
 		);
 
 		switch ( $instance['type'] ) {
@@ -130,6 +132,11 @@ class PostViews_Widget extends WP_Widget {
 		$instance['chars']   = isset( $new_instance['chars'] ) ? (int) $new_instance['chars'] : $instance['chars'];
 		$instance['cat_ids'] = isset( $new_instance['cat_ids'] ) ? implode( ',', array_map( 'absint', explode( ',', (string) $new_instance['cat_ids'] ) ) ) : $instance['cat_ids'];
 
+		$periods = array( 'all', 'today', 'week', 'month' );
+		if ( isset( $new_instance['period'] ) && in_array( $new_instance['period'], $periods, true ) ) {
+			$instance['period'] = $new_instance['period'];
+		}
+
 		$types = array( 'least_viewed', 'least_viewed_category', 'most_viewed', 'most_viewed_category' );
 		if ( isset( $new_instance['type'] ) && in_array( $new_instance['type'], $types, true ) ) {
 			$instance['type'] = $new_instance['type'];
@@ -159,6 +166,15 @@ class PostViews_Widget extends WP_Widget {
 				<option value="least_viewed_category"<?php selected( 'least_viewed_category', $instance['type'] ); ?>><?php esc_html_e( '按分类最少浏览', 'post-views' ); ?></option>
 				<option value="most_viewed"<?php selected( 'most_viewed', $instance['type'] ); ?>><?php esc_html_e( '最多浏览', 'post-views' ); ?></option>
 				<option value="most_viewed_category"<?php selected( 'most_viewed_category', $instance['type'] ); ?>><?php esc_html_e( '按分类最多浏览', 'post-views' ); ?></option>
+			</select>
+		</p>
+		<p>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'period' ) ); ?>"><?php esc_html_e( '时间范围：', 'post-views' ); ?></label>
+			<select name="<?php echo esc_attr( $this->get_field_name( 'period' ) ); ?>" id="<?php echo esc_attr( $this->get_field_id( 'period' ) ); ?>" class="widefat">
+				<option value="all"<?php selected( 'all', $instance['period'] ); ?>><?php esc_html_e( '全部时间（累计）', 'post-views' ); ?></option>
+				<option value="today"<?php selected( 'today', $instance['period'] ); ?>><?php esc_html_e( '今日热门', 'post-views' ); ?></option>
+				<option value="week"<?php selected( 'week', $instance['period'] ); ?>><?php esc_html_e( '本周热门（7天）', 'post-views' ); ?></option>
+				<option value="month"<?php selected( 'month', $instance['period'] ); ?>><?php esc_html_e( '本月热门（30天）', 'post-views' ); ?></option>
 			</select>
 		</p>
 		<p>

@@ -32,6 +32,21 @@ if ( ! function_exists( 'the_views' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_post_views' ) ) {
+	/**
+	 * Return the final calculated view count for a single post.
+	 *
+	 * @param int $post_id Post ID (defaults to current post).
+	 * @return int
+	 */
+	function get_post_views( $post_id = 0 ) {
+		if ( ! $post_id ) {
+			$post_id = get_the_ID();
+		}
+		return PostViews_Display::get_display_views( (int) $post_id );
+	}
+}
+
 if ( ! function_exists( 'get_totalviews' ) ) {
 	/**
 	 * Display the total number of views across every post.
@@ -184,6 +199,31 @@ if ( ! function_exists( 'get_least_viewed_tag' ) ) {
 				'chars' => $chars,
 				'order' => 'asc',
 				'tag'   => $tag_id,
+			),
+			$display
+		);
+	}
+}
+
+if ( ! function_exists( 'get_trending_posts' ) ) {
+	/**
+	 * List the top trending posts by period (today, week, month, all).
+	 *
+	 * @param string       $period  Time period: 'today', 'week', 'month', 'all'. Default 'week'.
+	 * @param string|array $mode    Post type(s). '' or 'both' for every type.
+	 * @param int          $limit   Maximum number of posts.
+	 * @param int          $chars   Truncate titles to this length. 0 disables.
+	 * @param bool         $display Echo when true, return when false.
+	 * @return string|void
+	 */
+	function get_trending_posts( $period = 'week', $mode = '', $limit = 10, $chars = 0, $display = true ) {
+		return PostViews_Query::output(
+			array(
+				'period' => $period,
+				'mode'   => $mode,
+				'limit'  => $limit,
+				'chars'  => $chars,
+				'order'  => 'desc',
 			),
 			$display
 		);

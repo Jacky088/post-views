@@ -1,45 +1,186 @@
 /**
- * Records a view over admin-ajax.php.
+ * Records a view over REST API or admin-ajax.php.
  *
- * Enqueued only when a page cache is in use, where counting during wp_head
- * would record the request that generated the cached page and nothing after.
+ * Enqueued when a page cache is in use, or when dwell time / scroll depth / UV
+ * tracking is configured.
  *
- * On success a `postviews:updated` event is dispatched on `document` carrying
- * the new count, so a theme can write it into the page. That is what the
- * LiteSpeed Cache recipe in the readme uses; previously it told people to edit
- * this file, which every plugin update then overwrote.
+ * On success, automatically updates any built-in PostViews styles in the DOM and
+ * dispatches a `postviews:updated` event on `document`.
  */
-fetch( viewsCacheL10n.admin_ajax_url, {
-	method: 'POST',
-	credentials: 'same-origin',
-	headers: {
-		'Content-Type': 'application/x-www-form-urlencoded',
-		'Cache-Control': 'no-cache',
-	},
-	body: new URLSearchParams( {
-		action: 'postviews',
-		nonce: viewsCacheL10n.nonce,
-		postviews_id: viewsCacheL10n.post_id,
-	} ),
-} )
-	.then( function( response ) {
-		return response.json();
-	} )
-	.then( function( data ) {
-		if ( ! data || ! data.success || ! data.data ) {
-			return;
+( function () {
+	if ( typeof viewsCacheL10n === 'undefined' || ! viewsCacheL10n.post_id ) {
+		return;
+	}
+
+	var postId = viewsCacheL10n.post_id;
+	var dwellTime = parseInt( viewsCacheL10n.dwell_time, 10 ) || 0;
+	var scrollDepth = parseInt( viewsCacheL10n.scroll_depth, 10 ) || 0;
+	var isUvMode = parseInt( viewsCacheL10n.count_mode, 10 ) === 1;
+
+	// UV (Unique Visitor) deduplication: 24h per post.
+	if ( isUvMode ) {
+		try {
+			var uvKey = 'pv_uv_' + postId;
+			var lastVisit = localStorage.getItem( uvKey );
+			var now = Date.now();
+			if ( lastVisit && ( now - parseInt( lastVisit, 10 ) ) < 86400000 ) {
+				return;
+			}
+		} catch ( e ) {
+			// localStorage unavailable in private mode or restricted iframe; proceed.
 		}
+	}
+
+	var dwellSatisfied = dwellTime <= 0;
+	var scrollSatisfied = scrollDepth <= 0;
+	var hitSent = false;
+
+	function roundNumber( num ) {
+		if ( num < 1000 ) {
+			return num.toLocaleString();
+		}
+		var units = [
+			{ divisor: 1e9, suffix: 'B' },
+			{ divisor: 1e6, suffix: 'M' },
+			{ divisor: 1e3, suffix: 'K' }
+		];
+		for ( var i = 0; i < units.length; i++ ) {
+			var rounded = Math.round( ( num / units[ i ].divisor ) * 10 ) / 10;
+			if ( rounded < 1000 ) {
+				return rounded + units[ i ].suffix;
+			}
+		}
+		return ( Math.round( ( num / 1e9 ) * 10 ) / 10 ) + 'B';
+	}
+
+	function updateDOM( views ) {
+		var formatted = views.toLocaleString();
+		var rounded = roundNumber( views );
+
+		var wrappers = document.querySelectorAll( '.pv-positioned-wrapper[data-postviews-id="' + postId + '"], .pv-positioned-wrapper' );
+		wrappers.forEach( function( wrapper ) {
+			wrapper.querySelectorAll( '.pv-number, .pv-glass-count, .pv-chip-count' ).forEach( function( el ) {
+				el.textContent = formatted;
+			} );
+			wrapper.querySelectorAll( '.pv-stat-value' ).forEach( function( el ) {
+				el.textContent = rounded;
+			} );
+			wrapper.querySelectorAll( '.pv-badge-text strong, .pv-neon-text strong, .pv-sunset-text strong, .pv-solid-text strong' ).forEach( function( el ) {
+				el.textContent = formatted;
+			} );
+			wrapper.querySelectorAll( '.pv-minimal-line .pv-text' ).forEach( function( el ) {
+				var suffix = el.textContent.replace( /^[\d,\.]+\s*/, '' );
+				el.textContent = formatted + ( suffix ? ' ' + suffix : '' );
+			} );
+		} );
 
 		document.dispatchEvent(
 			new CustomEvent( 'postviews:updated', {
 				detail: {
-					views: data.data.views,
-					postId: viewsCacheL10n.post_id,
+					views: views,
+					postId: postId,
 				},
-			} ),
+			} )
 		);
-	} )
-	.catch( function( error ) {
-		// eslint-disable-next-line no-console
-		console.log( 'WP-PostViews', error );
-	} );
+	}
+
+	function sendHit() {
+		if ( hitSent ) {
+			return;
+		}
+		hitSent = true;
+
+		// Mark UV timestamp upon sending hit.
+		if ( isUvMode ) {
+			try {
+				localStorage.setItem( 'pv_uv_' + postId, String( Date.now() ) );
+			} catch ( e ) {}
+		}
+
+		var preferRest = viewsCacheL10n.api_transport !== 'ajax';
+		var isRest = preferRest && !! viewsCacheL10n.rest_url;
+		var targetUrl = isRest ? viewsCacheL10n.rest_url : viewsCacheL10n.admin_ajax_url;
+
+		var headers = {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'Cache-Control': 'no-cache',
+		};
+
+		var bodyParams = isRest
+			? new URLSearchParams( { post_id: postId } )
+			: new URLSearchParams( {
+				action: 'postviews',
+				nonce: viewsCacheL10n.nonce,
+				postviews_id: postId,
+			} );
+
+		fetch( targetUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: headers,
+			body: bodyParams,
+		} )
+			.then( function( response ) {
+				return response.json();
+			} )
+			.then( function( data ) {
+				if ( ! data ) {
+					return;
+				}
+				// Support both REST format { views: ... } and admin-ajax { success: true, data: { views: ... } }.
+				var views = 0;
+				if ( typeof data.views !== 'undefined' ) {
+					views = parseInt( data.views, 10 ) || 0;
+				} else if ( data.success && data.data && typeof data.data.views !== 'undefined' ) {
+					views = parseInt( data.data.views, 10 ) || 0;
+				}
+
+				if ( views > 0 ) {
+					updateDOM( views );
+				}
+			} )
+			.catch( function( error ) {
+				// eslint-disable-next-line no-console
+				console.log( 'WP-PostViews', error );
+			} );
+	}
+
+	function maybeTriggerHit() {
+		if ( dwellSatisfied && scrollSatisfied ) {
+			sendHit();
+		}
+	}
+
+	// 1. Dwell time timer.
+	if ( dwellTime > 0 ) {
+		setTimeout( function () {
+			dwellSatisfied = true;
+			maybeTriggerHit();
+		}, dwellTime * 1000 );
+	}
+
+	// 2. Scroll depth listener.
+	if ( scrollDepth > 0 ) {
+		function onScroll() {
+			var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+			if ( docHeight <= 0 ) {
+				scrollSatisfied = true;
+				window.removeEventListener( 'scroll', onScroll );
+				maybeTriggerHit();
+				return;
+			}
+			var currentScroll = window.scrollY || window.pageYOffset || 0;
+			var pct = Math.round( ( currentScroll / docHeight ) * 100 );
+			if ( pct >= scrollDepth ) {
+				scrollSatisfied = true;
+				window.removeEventListener( 'scroll', onScroll );
+				maybeTriggerHit();
+			}
+		}
+		window.addEventListener( 'scroll', onScroll, { passive: true } );
+		onScroll(); // Initial check in case page is short.
+	}
+
+	// If neither dwell time nor scroll depth was specified, trigger immediately.
+	maybeTriggerHit();
+} )();

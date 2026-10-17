@@ -3,7 +3,7 @@
  * Plugin Name: Post Views
  * Plugin URI: https://github.com/Jacky088/post-views
  * Description: 统计并展示文章/页面的浏览次数。
- * Version: 2.0.12
+ * Version: 2.1.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: 木木
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 // Version.
-define( 'WP_POSTVIEWS_VERSION', '2.0.12' );
+define( 'WP_POSTVIEWS_VERSION', '2.1.0' );
 define( 'WP_POSTVIEWS_MAIN_FILE', __FILE__ );
 
 // Block WordPress.org update checks for this plugin.
@@ -47,20 +47,24 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $li
 // accessor are both reached before any action fires.
 require_once __DIR__ . '/includes/class-postviews-options.php';
 require_once __DIR__ . '/includes/compat.php';
+require_once __DIR__ . '/includes/class-postviews-stats.php';
 require_once __DIR__ . '/includes/class-postviews-display.php';
 require_once __DIR__ . '/includes/class-postviews-query.php';
 require_once __DIR__ . '/includes/class-postviews-counter.php';
 require_once __DIR__ . '/includes/class-postviews-core.php';
 require_once __DIR__ . '/includes/class-postviews-widget.php';
+require_once __DIR__ . '/includes/class-postviews-block.php';
 require_once __DIR__ . '/includes/class-postviews-admin.php';
 require_once __DIR__ . '/includes/class-postviews-settings.php';
 require_once __DIR__ . '/includes/template-tags.php';
 
 PostViews_Options::init();
+PostViews_Stats::init();
 PostViews_Display::init();
 PostViews_Counter::init();
 PostViews_Core::init();
 PostViews_Query::init();
+PostViews_Block::init();
 PostViews_Admin::init();
 PostViews_Settings::init();
 
@@ -95,6 +99,7 @@ function postviews_activate( $network_wide ) {
 		foreach ( $site_ids as $site_id ) {
 			switch_to_blog( (int) $site_id );
 			PostViews_Options::install();
+			PostViews_Stats::create_table();
 			restore_current_blog();
 		}
 
@@ -102,4 +107,5 @@ function postviews_activate( $network_wide ) {
 	}
 
 	PostViews_Options::install();
+	PostViews_Stats::create_table();
 }

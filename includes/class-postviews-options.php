@@ -63,6 +63,82 @@ class PostViews_Options {
 		// would otherwise keep serving the value from before the write.
 		add_action( 'add_option_' . self::OPTION, array( __CLASS__, 'flush' ) );
 		add_action( 'update_option_' . self::OPTION, array( __CLASS__, 'flush' ) );
+
+		// Whitelist SVG vector icons in template markup when passed through wp_kses_post().
+		add_filter( 'wp_kses_allowed_html', array( __CLASS__, 'filter_allowed_html' ), 10, 2 );
+	}
+
+	/**
+	 * Extend wp_kses allowed tags to preserve vector SVGs and micro-markup in templates.
+	 *
+	 * @param array  $tags    Allowed HTML elements.
+	 * @param string $context Context name.
+	 * @return array
+	 */
+	public static function filter_allowed_html( $tags, $context ) {
+		if ( 'post' === $context || empty( $context ) ) {
+			$tags['svg'] = array(
+				'class'           => true,
+				'aria-hidden'     => true,
+				'aria-label'      => true,
+				'role'            => true,
+				'viewbox'         => true,
+				'viewBox'         => true,
+				'width'           => true,
+				'height'          => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'xmlns'           => true,
+				'style'           => true,
+			);
+			$tags['path'] = array(
+				'd'               => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'opacity'         => true,
+			);
+			$tags['circle'] = array(
+				'cx'           => true,
+				'cy'           => true,
+				'r'            => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'opacity'      => true,
+			);
+			$tags['polygon'] = array(
+				'points'          => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+			);
+			$tags['polyline'] = array(
+				'points'          => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+			);
+			$tags['line'] = array(
+				'x1'              => true,
+				'y1'              => true,
+				'x2'              => true,
+				'y2'              => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+			);
+		}
+		return $tags;
 	}
 
 	/**
@@ -75,23 +151,33 @@ class PostViews_Options {
 	 */
 	public static function defaults() {
 		return array(
-			'count'                => 1,
-			'exclude_bots'         => 0,
-			'display_home'         => 0,
-			'display_single'       => 0,
-			'display_page'         => 0,
-			'display_archive'      => 0,
-			'display_search'       => 0,
-			'display_other'        => 0,
-			'use_ajax'             => 1,
-			'template'             => self::default_template( 'template' ),
-			'most_viewed_template' => self::default_template( 'most_viewed_template' ),
-			'template_style'       => 'minimal-line',
-			'enabled_post_types'   => array( 'post', 'page' ),
-			// 第三方主题（JustNews）的快讯单页模板绕过 the_content，走
-			// the_excerpt 输出内容。此开关在快讯详情页的 excerpt 末尾追加
-			// 阅读数标签。默认关闭，不影响既有布局。
-			'display_kuaixun_views' => 0,
+			'count'                   => 1,
+			'count_mode'              => 0, // 0 = PV, 1 = UV (24h deduplication).
+			'dwell_time'              => 0, // Minimum dwell time in seconds before counting (0 = immediate).
+			'scroll_depth'            => 0, // Minimum scroll depth percentage before counting (0 = immediate).
+			'exclude_bots'            => 0,
+			'api_transport'           => 'rest', // 'rest' = REST API, 'ajax' = admin-ajax.php
+			'enable_buffer'           => 0, // 0 = direct write, 1 = transient buffer pool
+			'buffer_threshold'        => 50, // Batch flush threshold
+			'words_per_minute'        => 300, // Average reading speed for %READ_TIME%
+			'enable_meta_box'         => 1, // 1 = show post edit meta box, 0 = hide
+			'enable_dashboard_widget' => 1, // 1 = show dashboard top 5 widget
+			'auto_random_offset'      => 0, // 0 = off, 1 = auto assign random offset on publish
+			'auto_offset_min'         => 100, // Min initial random offset
+			'auto_offset_max'         => 300, // Max initial random offset
+			'global_multiplier'       => 1.0, // Global virtual views multiplier
+			'display_home'            => 0,
+			'display_single'          => 0,
+			'display_page'            => 0,
+			'display_archive'         => 0,
+			'display_search'          => 0,
+			'display_other'           => 0,
+			'use_ajax'                => 1,
+			'template'                => self::default_template( 'template' ),
+			'most_viewed_template'    => self::default_template( 'most_viewed_template' ),
+			'template_style'          => 'minimal-line',
+			'enabled_post_types'      => array( 'post', 'page' ),
+			'display_kuaixun_views'   => 0,
 		);
 	}
 
@@ -102,17 +188,15 @@ class PostViews_Options {
 	 */
 	public static function template_styles() {
 		return array(
-			'modern-card'    => '<div class="pv-modern-card"><div class="pv-icon-circle">&#128065;</div><div class="pv-content"><div class="pv-label">' . __( '阅读量', 'post-views' ) . '</div><div class="pv-number">%VIEW_COUNT%</div></div></div>',
-			'gradient-badge' => '<div class="pv-gradient-badge"><span class="pv-badge-icon">&#128293;</span><span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> ' . __( '次热度', 'post-views' ) . '</span></div>',
-			'minimal-line'   => '<div class="pv-minimal-line"><span class="pv-icon">&#128065;</span><span class="pv-divider"></span><span class="pv-text">%VIEW_COUNT% ' . __( '次浏览', 'post-views' ) . '</span></div>',
-			'stat-box'       => '<div class="pv-stat-box"><div class="pv-stat-icon">&#128200;</div><div class="pv-stat-content"><div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div></div></div>',
-			'glass-card'     => '<div class="pv-glass-card"><div class="pv-glass-icon">&#128065;</div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
-			'outline-chip'   => '<div class="pv-outline-chip"><span class="pv-chip-icon">&#128214;</span><span class="pv-chip-label">' . __( '浏览', 'post-views' ) . '</span><span class="pv-chip-count">%VIEW_COUNT%</span></div>',
-
-			// New capsule variants (same silhouette as the red-box reference).
-			'neon-pill'      => '<div class="pv-neon-pill"><span class="pv-neon-icon">&#128288;</span><span class="pv-neon-text">' . __( '浏览', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
-			'sunset-pill'    => '<div class="pv-sunset-pill"><span class="pv-sunset-icon">&#9728;</span><span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> ' . __( '次浏览', 'post-views' ) . '</span></div>',
-			'solid-dark-pill' => '<div class="pv-solid-dark-pill"><span class="pv-solid-dot"></span><span class="pv-solid-text">' . __( '阅读量', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
+			'modern-card'     => '<div class="pv-modern-card"><span class="pv-icon-circle"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="pv-content"><span class="pv-label">' . __( '阅读量', 'post-views' ) . '</span><span class="pv-number">%VIEW_COUNT%</span></div></div>',
+			'gradient-badge'  => '<div class="pv-gradient-badge"><span class="pv-badge-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg></span><span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> ' . __( '次热度', 'post-views' ) . '</span></div>',
+			'minimal-line'    => '<div class="pv-minimal-line"><span class="pv-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="pv-divider"></span><span class="pv-text">%VIEW_COUNT% ' . __( '次浏览', 'post-views' ) . '</span></div>',
+			'stat-box'        => '<div class="pv-stat-box"><div class="pv-stat-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div><div class="pv-stat-content"><div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div></div></div>',
+			'glass-card'      => '<div class="pv-glass-card"><div class="pv-glass-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
+			'outline-chip'    => '<div class="pv-outline-chip"><span class="pv-chip-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg></span><span class="pv-chip-label">' . __( '浏览', 'post-views' ) . '</span><span class="pv-chip-count">%VIEW_COUNT%</span></div>',
+			'neon-pill'       => '<div class="pv-neon-pill"><span class="pv-neon-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span><span class="pv-neon-text">' . __( '浏览', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
+			'sunset-pill'     => '<div class="pv-sunset-pill"><span class="pv-sunset-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span><span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> ' . __( '次浏览', 'post-views' ) . '</span></div>',
+			'solid-dark-pill' => '<div class="pv-solid-dark-pill"><span class="pv-solid-dot"><span class="pv-ping"></span></span><span class="pv-solid-text">' . __( '阅读量', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
 		);
 	}
 
@@ -211,6 +295,7 @@ class PostViews_Options {
 	 */
 	public static function flush() {
 		self::$cache = null;
+		PostViews_Query::flush_list_cache();
 	}
 
 	/**
@@ -245,6 +330,10 @@ class PostViews_Options {
 		// the migration forever on some sites and never mark others done.
 		if ( empty( $installed ) || version_compare( $installed, '2.0.0', '<' ) ) {
 			self::migrate_template_slashes();
+		}
+
+		if ( empty( $installed ) || version_compare( $installed, '2.1.0', '<' ) ) {
+			PostViews_Stats::create_table();
 		}
 
 		update_option( self::VERSION_OPTION, WP_POSTVIEWS_VERSION );

@@ -52,9 +52,14 @@ if ( ! function_exists( 'postviews_uninstall_site' ) ) {
 			OR option_name LIKE '\\_transient\\_timeout\\_postviews\\_rate\\_%'"
 		);
 
+		// Drop custom stats table and clear prune cron event.
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}post_views_stats" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		wp_clear_scheduled_hook( 'postviews_daily_prune' );
+
 		// The core helper rather than a DELETE against $wpdb->postmeta: it does
 		// the same work and invalidates the post meta cache while it is at it.
 		delete_post_meta_by_key( 'views' );
+		delete_post_meta_by_key( 'views_offset' );
 	}
 }
 

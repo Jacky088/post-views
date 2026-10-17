@@ -107,9 +107,9 @@ if ( ! function_exists( 'postviews_populate_views_property' ) ) {
 		update_meta_cache( 'post', $ids );
 
 		foreach ( $posts as $post ) {
-			$count = (int) get_post_meta( $post->ID, 'views', true );
-			if ( $count > 0 ) {
-				$post->views = $count;
+			$display_views = PostViews_Display::get_display_views( $post->ID );
+			if ( $display_views > 0 ) {
+				$post->views = $display_views;
 			}
 		}
 

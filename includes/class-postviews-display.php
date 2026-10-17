@@ -15,14 +15,23 @@ defined( 'ABSPATH' ) || exit;
 class PostViews_Display {
 
 	/**
+	 * Flag to prevent recursion when reading raw post meta.
+	 *
+	 * @var bool
+	 */
+	private static $bypass_filter = false;
+
+	/**
 	 * Hook registration.
 	 *
 	 * @return void
 	 */
 	public static function init() {
 		add_shortcode( 'views', array( __CLASS__, 'shortcode' ) );
+		add_shortcode( 'trending_views', array( __CLASS__, 'shortcode_trending' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_filter( 'the_content', array( __CLASS__, 'append_to_content' ) );
+		add_filter( 'get_post_metadata', array( __CLASS__, 'filter_get_post_metadata' ), 10, 4 );
 
 		// JustNews renders kuaixun detail pages through the_excerpt() rather
 		// than the_content(), and the the_excerpt path proved unreliable on the
@@ -120,8 +129,12 @@ class PostViews_Display {
 		/** This filter is documented in includes/class-postviews-display.php */
 		$views_html = apply_filters( 'the_views', $views_html );
 
+		if ( '' === trim( (string) $views_html ) ) {
+			return $content;
+		}
+
 		// Wrap views in a positioned container for bottom-right placement.
-		$positioned_views = '<div class="pv-positioned-wrapper">' . $views_html . '</div>';
+		$positioned_views = '<div class="pv-positioned-wrapper" data-postviews-id="' . esc_attr( (string) get_the_ID() ) . '">' . $views_html . '</div>';
 
 		return $content . $positioned_views;
 	}
@@ -181,13 +194,75 @@ class PostViews_Display {
 	}
 
 	/**
-	 * Substitute the count tokens into the single post template.
+	 * The [trending_views] shortcode.
 	 *
-	 * @param int $post_id Post ID.
+	 * Attributes: period ('today', 'week', 'month', 'all'), limit (default 10), mode ('post', 'page', etc.).
+	 *
+	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public static function render_count_template( $post_id ) {
-		$post_views = (int) get_post_meta( $post_id, 'views', true );
+	public static function shortcode_trending( $atts ) {
+		$attributes = shortcode_atts(
+			array(
+				'period'   => 'week',
+				'limit'    => 10,
+				'chars'    => 0,
+				'mode'     => '',
+				'order'    => 'desc',
+				'category' => null,
+				'tag'      => null,
+			),
+			$atts
+		);
+
+		return '<ul class="pv-top-list pv-trending-shortcode">' . PostViews_Query::render( $attributes ) . '</ul>';
+	}
+
+	/**
+	 * Filter get_post_metadata for 'views' key on the front end.
+	 *
+	 * Ensures third-party themes calling get_post_meta($id, 'views', true)
+	 * receive the calculated view count (actual * multiplier + offset).
+	 *
+	 * @param mixed  $value     Original value.
+	 * @param int    $object_id Post ID.
+	 * @param string $meta_key  Meta key being requested.
+	 * @param bool   $single    Whether to return a single value.
+	 * @return mixed
+	 */
+	public static function filter_get_post_metadata( $value, $object_id, $meta_key, $single = false ) {
+		if ( 'views' !== $meta_key ) {
+			return $value;
+		}
+
+		if ( self::$bypass_filter ) {
+			return $value;
+		}
+
+		// Never filter in WordPress Admin or when saving.
+		if ( is_admin() ) {
+			return $value;
+		}
+
+		$display_views = self::get_display_views( $object_id );
+
+		return $single ? (string) $display_views : array( (string) $display_views );
+	}
+
+	/**
+	 * Get the final calculated display views for a post: (raw * multiplier) + offset.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int
+	 */
+	public static function get_display_views( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return 0;
+		}
+
+		self::$bypass_filter = true;
+		$post_views          = (int) get_post_meta( $post_id, 'views', true );
 
 		// Fallback: check theme's view count meta keys (read-only, never overwrite).
 		if ( 0 === $post_views ) {
@@ -201,13 +276,78 @@ class PostViews_Display {
 			}
 		}
 
+		$offset     = (int) get_post_meta( $post_id, 'views_offset', true );
+		$multiplier = (float) get_post_meta( $post_id, 'views_multiplier', true );
+		self::$bypass_filter = false;
+
+		if ( $multiplier <= 0 ) {
+			$multiplier = (float) PostViews_Options::get( 'global_multiplier', 1.0 );
+		}
+		if ( $multiplier <= 0 ) {
+			$multiplier = 1.0;
+		}
+
+		return (int) round( $post_views * $multiplier ) + $offset;
+	}
+
+	/**
+	 * Substitute the count tokens into the single post template.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	public static function render_count_template( $post_id ) {
+		$post_views = self::get_display_views( $post_id );
+
+		$stats         = self::get_reading_stats( $post_id );
+		$read_time_str = sprintf( _n( '%d 分钟', '%d 分钟', $stats['minutes'], 'post-views' ), $stats['minutes'] );
+		$words_str     = number_format_i18n( $stats['words'] );
+
 		// wp_kses_post() at render, not just at save: the option row can also be
 		// written by PostViews_Options::save() or a direct update_option(),
 		// neither of which runs the settings screen's sanitize callback.
 		return str_replace(
-			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%' ),
-			array( number_format_i18n( $post_views ), self::round_number( $post_views ) ),
+			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%', '%READ_TIME%', '%WORD_COUNT%' ),
+			array( number_format_i18n( $post_views ), self::round_number( $post_views ), $read_time_str, $words_str ),
 			wp_kses_post( (string) PostViews_Options::get( 'template', '' ) )
+		);
+	}
+
+	/**
+	 * Calculate word count and estimated reading time for a post.
+	 *
+	 * Supports both CJK characters and Latin alphabetic words.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array with 'words' count and estimated 'minutes'.
+	 */
+	public static function get_reading_stats( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return array(
+				'words'   => 0,
+				'minutes' => 1,
+			);
+		}
+
+		$content = strip_shortcodes( $post->post_content );
+		$content = wp_strip_all_tags( $content );
+
+		// Count CJK characters.
+		$cjk_count = preg_match_all( '/[\x{4e00}-\x{9fa5}]/u', $content, $matches );
+		// Strip CJK to count Latin words cleanly.
+		$non_cjk     = preg_replace( '/[\x{4e00}-\x{9fa5}]/u', ' ', $content );
+		$latin_count = str_word_count( $non_cjk );
+
+		$total_words = (int) ( $cjk_count + $latin_count );
+		// Average reading speed configurable in settings (default: 300 words per minute).
+		$wpm     = PostViews_Options::get_int( 'words_per_minute', 300 );
+		$wpm     = $wpm > 0 ? $wpm : 300;
+		$minutes = max( 1, (int) ceil( $total_words / $wpm ) );
+
+		return array(
+			'words'   => $total_words,
+			'minutes' => $minutes,
 		);
 	}
 
@@ -289,7 +429,7 @@ class PostViews_Display {
 	 * apostrophe and break out of the attribute.
 	 *
 	 * @param string $text   The title.
-	 * @param int    $length Maximum length in characters. 0 disables truncation.
+	 * @param int    $length Maximum length in characters. When used by listing helpers, passing 0 disables truncation at the caller level.
 	 * @return string
 	 */
 	public static function snippet_text( $text, $length = 0 ) {
