@@ -542,39 +542,63 @@ class PostViews_Admin {
 	 */
 	public static function migrate_legacy_views() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
+			wp_die( esc_html__( 'Unauthorized', 'post-views' ) );
 		}
 		check_admin_referer( 'postviews_migrate_legacy' );
 
 		global $wpdb;
-		$fallback_keys = array( 'pageviews', 'post_views_count', 'post_views', '_post_views', '_post_views_count' );
+		$fallback_keys = array(
+			'pageviews',
+			'post_views_count',
+			'post_views',
+			'_post_views',
+			'_post_views_count',
+			'views_count',
+			'tie_views',
+			'wp_post_views',
+		);
 		$placeholders  = implode( ',', array_fill( 0, count( $fallback_keys ), '%s' ) );
 
-		// Copy legacy meta_value into 'views' where views is 0 or absent.
-		$migrated_count = $wpdb->query(
-			$wpdb->prepare(
-				"INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
-				SELECT pm.post_id, 'views', pm.meta_value
-				FROM {$wpdb->postmeta} pm
-				WHERE pm.meta_key IN ($placeholders)
-				AND (pm.meta_value + 0) > 0
-				AND NOT EXISTS (
-					SELECT 1 FROM {$wpdb->postmeta} p2
-					WHERE p2.post_id = pm.post_id
-					AND p2.meta_key = 'views'
-					AND (p2.meta_value + 0) > 0
-				)
-				GROUP BY pm.post_id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				...$fallback_keys
+		// Query posts that have legacy views > 0 and do NOT already have positive 'views' (> 0).
+		// Uses MAX(pm.meta_value + 0) to safely pick the highest count if multiple legacy keys exist.
+		$sql = $wpdb->prepare(
+			"SELECT pm.post_id, MAX(pm.meta_value + 0) AS max_legacy_views
+			FROM {$wpdb->postmeta} pm
+			WHERE pm.meta_key IN ($placeholders)
+			AND (pm.meta_value + 0) > 0
+			AND NOT EXISTS (
+				SELECT 1 FROM {$wpdb->postmeta} p2
+				WHERE p2.post_id = pm.post_id
+				AND p2.meta_key = 'views'
+				AND (p2.meta_value + 0) > 0
 			)
+			GROUP BY pm.post_id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			...$fallback_keys
 		);
+
+		$candidates = $wpdb->get_results( $sql );
+		$migrated_count = 0;
+
+		if ( ! empty( $candidates ) ) {
+			foreach ( $candidates as $row ) {
+				$post_id      = (int) $row->post_id;
+				$legacy_views = (int) $row->max_legacy_views;
+
+				if ( $post_id > 0 && $legacy_views > 0 ) {
+					// Use update_post_meta: updates existing 0/empty meta in place, or inserts if none exists.
+					// This prevents duplicate 'views' rows in wp_postmeta and refreshes WP post cache.
+					update_post_meta( $post_id, 'views', $legacy_views );
+					$migrated_count++;
+				}
+			}
+		}
 
 		delete_transient( 'postviews_total_views' );
 		if ( function_exists( 'wp_cache_flush_group' ) ) {
 			wp_cache_flush_group( 'post-views' );
 		}
 
-		wp_safe_redirect( admin_url( 'options-general.php?page=post-views&migrated=' . (int) $migrated_count ) );
+		wp_safe_redirect( admin_url( 'options-general.php?page=post-views&migrated=' . (int) $migrated_count . '#tab-tools' ) );
 		exit;
 	}
 
@@ -585,7 +609,16 @@ class PostViews_Admin {
 	 */
 	public static function get_legacy_meta_stats() {
 		global $wpdb;
-		$keys  = array( 'pageviews', 'post_views_count', 'post_views', '_post_views', '_post_views_count' );
+		$keys  = array(
+			'pageviews',
+			'post_views_count',
+			'post_views',
+			'_post_views',
+			'_post_views_count',
+			'views_count',
+			'tie_views',
+			'wp_post_views',
+		);
 		$stats = array();
 
 		foreach ( $keys as $k ) {
