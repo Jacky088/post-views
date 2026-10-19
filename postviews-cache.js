@@ -53,12 +53,57 @@
 		return ( Math.round( ( num / 1e9 ) * 10 ) / 10 ) + 'B';
 	}
 
+	function syncThemeTopViews( views ) {
+		var formatted = views.toLocaleString();
+		var selectors = [
+			'#post-' + postId + ' .item-meta-li.views',
+			'#post-' + postId + ' .entry-meta .views',
+			'article .entry-header .views',
+			'article .item-meta-li.views',
+			'.entry-header .item-meta-li.views',
+			'.entry-header .views',
+			'.article-header .views',
+			'.single-header .views',
+			'.entry-meta .views',
+			'.post-meta .views',
+			'.item-meta-li.views'
+		];
+
+		var candidates = document.querySelectorAll( selectors.join( ', ' ) );
+		candidates.forEach( function( el ) {
+			// Never touch our plugin's own bottom/inline containers
+			if ( el.closest( '.pv-positioned-wrapper, .pv-minimal-line, .pv-modern-card, .pv-gradient-badge' ) ) {
+				return;
+			}
+
+			// If element has a dedicated inner count span (e.g. .count or strong)
+			var innerNum = el.querySelector( '.count, .num, strong, b' );
+			if ( innerNum && /\d[\d,]*/.test( innerNum.textContent ) ) {
+				innerNum.textContent = innerNum.textContent.replace( /\d[\d,]*/, formatted );
+				return;
+			}
+
+			// Traverse text nodes to replace numbers in place, preserving labels/prefixes (e.g. "阅读 669" -> "阅读 671")
+			var walker = document.createTreeWalker( el, NodeFilter.SHOW_TEXT, null, false );
+			var node;
+			while ( ( node = walker.nextNode() ) ) {
+				if ( /\d[\d,]*/.test( node.nodeValue ) ) {
+					node.nodeValue = node.nodeValue.replace( /\d[\d,]*/, formatted );
+					break;
+				}
+			}
+		} );
+	}
+
 	function updateDOM( views ) {
 		var formatted = views.toLocaleString();
 		var rounded = roundNumber( views );
 
 		var wrappers = document.querySelectorAll( '.pv-positioned-wrapper[data-postviews-id="' + postId + '"], .pv-positioned-wrapper' );
 		wrappers.forEach( function( wrapper ) {
+			if ( wrapper.classList.contains( 'pv-mode-stats' ) || ( wrapper.getAttribute( 'data-pv-mode' ) && wrapper.getAttribute( 'data-pv-mode' ).indexOf( 'stats_' ) === 0 ) ) {
+				return;
+			}
 			wrapper.querySelectorAll( '.pv-number, .pv-glass-count, .pv-chip-count' ).forEach( function( el ) {
 				el.textContent = formatted;
 			} );
@@ -69,10 +114,20 @@
 				el.textContent = formatted;
 			} );
 			wrapper.querySelectorAll( '.pv-minimal-line .pv-text' ).forEach( function( el ) {
+				var metaEl = el.querySelector( '.pv-reading-meta' );
+				var metaHtml = metaEl ? metaEl.outerHTML : '';
 				var suffix = el.textContent.replace( /^[\d,\.]+\s*/, '' );
-				el.textContent = formatted + ( suffix ? ' ' + suffix : '' );
+				if ( metaEl ) {
+					var baseSuffix = suffix.replace( metaEl.textContent, '' ).trim();
+					el.innerHTML = formatted + ( baseSuffix ? ' ' + baseSuffix : '' ) + metaHtml;
+				} else {
+					el.textContent = formatted + ( suffix ? ' ' + suffix : '' );
+				}
 			} );
 		} );
+
+		// Real-time synchronization for JustNews and other third-party theme top meta bars.
+		syncThemeTopViews( views );
 
 		document.dispatchEvent(
 			new CustomEvent( 'postviews:updated', {
@@ -179,6 +234,36 @@
 		}
 		window.addEventListener( 'scroll', onScroll, { passive: true } );
 		onScroll(); // Initial check in case page is short.
+	}
+
+	// Initial real-time alignment with bottom card if page was rendered from cache
+	function syncInitial() {
+		var wrapper = document.querySelector( '.pv-positioned-wrapper[data-postviews-id="' + postId + '"], .pv-positioned-wrapper' );
+		if ( ! wrapper ) {
+			return;
+		}
+		var numEl = wrapper.querySelector( '.pv-number, .pv-glass-count, .pv-chip-count, .pv-badge-text strong, .pv-neon-text strong, .pv-sunset-text strong, .pv-solid-text strong' );
+		var initialNum = 0;
+		if ( numEl ) {
+			initialNum = parseInt( numEl.textContent.replace( /[^\d]/g, '' ), 10 ) || 0;
+		} else {
+			var textEl = wrapper.querySelector( '.pv-minimal-line .pv-text' );
+			if ( textEl ) {
+				var m = textEl.textContent.match( /\d[\d,]*/ );
+				if ( m ) {
+					initialNum = parseInt( m[0].replace( /[^\d]/g, '' ), 10 ) || 0;
+				}
+			}
+		}
+		if ( initialNum > 0 ) {
+			syncThemeTopViews( initialNum );
+		}
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', syncInitial );
+	} else {
+		syncInitial();
 	}
 
 	// If neither dwell time nor scroll depth was specified, trigger immediately.

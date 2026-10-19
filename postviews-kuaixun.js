@@ -42,36 +42,19 @@
 
 	function buildPill() {
 		var wrap = document.createElement( 'div' );
-		wrap.className = 'kx-views-wrap';
+		wrap.className = 'kx-views-wrap pv-positioned-wrapper';
+		wrap.setAttribute( 'data-postviews-id', String( data.post_id ) );
 
-		var span = document.createElement( 'span' );
-		span.className = 'item-meta-li views kx-views';
-		span.setAttribute( 'title', 'Views' );
+		if ( data.html && typeof data.html === 'string' && data.html.trim().length > 0 ) {
+			wrap.innerHTML = data.html;
+			return wrap;
+		}
 
-		var svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
-		svg.setAttribute( 'class', 'kx-views-icon' );
-		svg.setAttribute( 'viewBox', '0 0 24 24' );
-		svg.setAttribute( 'width', '14' );
-		svg.setAttribute( 'height', '14' );
-		svg.setAttribute( 'fill', 'none' );
-		svg.setAttribute( 'stroke', 'currentColor' );
-		svg.setAttribute( 'stroke-width', '2' );
-		svg.setAttribute( 'stroke-linecap', 'round' );
-		svg.setAttribute( 'stroke-linejoin', 'round' );
-		svg.setAttribute( 'aria-hidden', 'true' );
-
-		var path = document.createElementNS( 'http://www.w3.org/2000/svg', 'path' );
-		path.setAttribute( 'd', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' );
-		var circle = document.createElementNS( 'http://www.w3.org/2000/svg', 'circle' );
-		circle.setAttribute( 'cx', '12' );
-		circle.setAttribute( 'cy', '12' );
-		circle.setAttribute( 'r', '3' );
-		svg.appendChild( path );
-		svg.appendChild( circle );
-
-		span.appendChild( svg );
-		span.appendChild( document.createTextNode( format( count ) ) );
-		wrap.appendChild( span );
+		// Fallback minimal-line capsule with elegant book icon
+		var pill = document.createElement( 'div' );
+		pill.className = 'pv-minimal-line';
+		pill.innerHTML = '<span class="pv-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="pv-divider"></span><span class="pv-text">' + format( count ) + ' 次阅读</span>';
+		wrap.appendChild( pill );
 		return wrap;
 	}
 

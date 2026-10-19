@@ -76,18 +76,24 @@ class PostViews_Settings {
 	 * @return void
 	 */
 	public static function enqueue_scripts() {
+		$front_css_file = dirname( WP_POSTVIEWS_MAIN_FILE ) . '/postviews-front.css';
+		$style_ver      = WP_POSTVIEWS_VERSION . ( file_exists( $front_css_file ) ? '.' . filemtime( $front_css_file ) : '' );
+
 		wp_enqueue_style(
 			'post-views-front',
 			plugins_url( 'postviews-front.css', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
-			WP_POSTVIEWS_VERSION
+			$style_ver
 		);
+
+		$admin_js_file = dirname( WP_POSTVIEWS_MAIN_FILE ) . '/postviews-admin.js';
+		$script_ver    = WP_POSTVIEWS_VERSION . ( file_exists( $admin_js_file ) ? '.' . filemtime( $admin_js_file ) : '' );
 
 		wp_enqueue_script(
 			'wp-postviews-admin',
 			plugins_url( 'postviews-admin.js', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
-			WP_POSTVIEWS_VERSION,
+			$script_ver,
 			true
 		);
 
@@ -210,9 +216,21 @@ class PostViews_Settings {
 		} else {
 			$current['enabled_post_types'] = array();
 		}
-		$current['enabled_post_types'] = array_values(
-			array_diff( (array) $current['enabled_post_types'], $blocked_types )
-		);
+		// Views position.
+		if ( isset( $input['views_position'] ) ) {
+			$allowed_positions = array( 'bottom-right', 'bottom-left', 'top-right', 'top-left' );
+			if ( in_array( $input['views_position'], $allowed_positions, true ) ) {
+				$current['views_position'] = $input['views_position'];
+			}
+		}
+
+		// Capsule content display mode (views alone, stats alone, or both combined).
+		if ( isset( $input['capsule_display_mode'] ) ) {
+			$allowed_modes = array( 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words' );
+			if ( in_array( $input['capsule_display_mode'], $allowed_modes, true ) ) {
+				$current['capsule_display_mode'] = $input['capsule_display_mode'];
+			}
+		}
 
 		return $current;
 	}
@@ -284,7 +302,7 @@ class PostViews_Settings {
 		$style_names       = array(
 			'modern-card'     => __( '现代简洁 (Line+ 简约圆角)', 'post-views' ),
 			'gradient-badge'  => __( '极简数字 (纯数字红点)', 'post-views' ),
-			'minimal-line'    => __( '极简线性 (简洁线性图标)', 'post-views' ),
+			'minimal-line'    => __( '极简线性 (雅致书卷阅读)', 'post-views' ),
 			'stat-box'        => __( '复古轻奢 (分形 HUD 设计)', 'post-views' ),
 			'glass-card'      => __( '海去动感 (Vision 晶透明玻璃)', 'post-views' ),
 			'outline-chip'    => __( '轻奢圆角 (深色渐变发光)', 'post-views' ),
@@ -317,10 +335,7 @@ class PostViews_Settings {
 				</div>
 			</div>
 
-			<!-- Notices -->
-			<?php if ( isset( $_GET['settings-updated'] ) ) : ?>
-				<div class="notice notice-success is-dismissible" style="margin: 0 0 20px 0; border-radius: 8px;"><p><?php esc_html_e( '设置已成功保存！', 'post-views' ); ?></p></div>
-			<?php endif; ?>
+			<!-- Notices (Action-specific notices; settings-updated handled natively by WP settings_errors) -->
 			<?php if ( isset( $_GET['flushed_buffer'] ) ) : ?>
 				<div class="notice notice-success is-dismissible" style="margin: 0 0 20px 0; border-radius: 8px;"><p><?php printf( esc_html__( '缓冲池已刷新！成功批量落库入表 %d 次浏览量。', 'post-views' ), (int) $_GET['flushed_buffer'] ); ?></p></div>
 			<?php endif; ?>
@@ -389,11 +404,18 @@ class PostViews_Settings {
 										<div class="pv-style-name"><?php echo esc_html( $style_names[ $key ] ); ?></div>
 										<div class="pv-style-demo">
 											<?php
+											$preview_tpl  = $template;
+											$reading_mode = PostViews_Display::get_capsule_display_mode();
+											if ( 0 === strpos( $reading_mode, 'stats_' ) ) {
+												$preview_tpl = PostViews_Display::transform_template_for_stats_only( $preview_tpl, $reading_mode );
+											} elseif ( 0 === strpos( $reading_mode, 'both' ) ) {
+												$preview_tpl = PostViews_Display::inject_reading_stats_to_template( $preview_tpl, $reading_mode );
+											}
 											echo wp_kses_post(
 												str_replace(
-													array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%' ),
-													array( '1,234', '1.2K' ),
-													$template
+													array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%', '%READ_TIME%', '%WORD_COUNT%' ),
+													array( '1,234', '1.2K', '6 分钟', '1,850' ),
+													$preview_tpl
 												)
 											);
 											?>
@@ -445,6 +467,53 @@ class PostViews_Settings {
 										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
 										<span><?php esc_html_e( '勾选后插件会自动在对应内容的正文中添加浏览量显示。', 'post-views' ); ?></span>
 									</div>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="views-views_position">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+										<?php esc_html_e( '胶囊显示位置：', 'post-views' ); ?>
+									</label>
+								</th>
+								<td>
+									<?php
+									self::select(
+										'views_position',
+										array(
+											'bottom-right' => __( '右下角 (正文下方 · 默认)', 'post-views' ),
+											'bottom-left'  => __( '左下角 (正文下方)', 'post-views' ),
+											'top-right'    => __( '右上角 (正文上方)', 'post-views' ),
+											'top-left'     => __( '左上角 (正文上方)', 'post-views' ),
+										)
+									);
+									?>
+									<span class="pv-inline-note"><?php esc_html_e( '自定义文章/页面等常规内容中浏览量胶囊的排版位置（快讯保持右下独立悬浮，不受此项影响）。', 'post-views' ); ?></span>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="views-capsule_display_mode">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+										<?php esc_html_e( '胶囊内容显示模式：', 'post-views' ); ?>
+									</label>
+								</th>
+								<td>
+									<?php
+									self::select(
+										'capsule_display_mode',
+										array(
+											'views_only'  => __( '浏览量单独显示 (经典模式 · 默认)', 'post-views' ),
+											'both'        => __( '浏览量 + 字数与阅读时间同时显示 (例：1,234 次阅读 · 约 1,850 字 · 预计阅读 6 分钟)', 'post-views' ),
+											'both_time'   => __( '浏览量 + 仅阅读时间同时显示 (例：1,234 次阅读 · 预计阅读 6 分钟)', 'post-views' ),
+											'both_words'  => __( '浏览量 + 仅文章字数同时显示 (例：1,234 次阅读 · 全文约 1,850 字)', 'post-views' ),
+											'stats_only'  => __( '字数与阅读时间单独显示 (不显浏览量 · 例：约 1,850 字 · 预计阅读 6 分钟)', 'post-views' ),
+											'stats_time'  => __( '仅阅读时间单独显示 (不显浏览量 · 例：预计阅读 6 分钟)', 'post-views' ),
+											'stats_words' => __( '仅文章字数单独显示 (不显浏览量 · 例：全文约 1,850 字)', 'post-views' ),
+										)
+									);
+									?>
+									<span class="pv-inline-note"><?php esc_html_e( '自由选择胶囊内展示的内容组合（浏览量单独显示 / 字数时间单独显示 / 两者同时显示），胶囊外观预设、高度与图标完美保持不变。', 'post-views' ); ?></span>
 								</td>
 							</tr>
 							<tr>
@@ -1138,6 +1207,7 @@ class PostViews_Settings {
 				gap: 6px;
 				margin-bottom: 22px;
 				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+				outline: none !important;
 			}
 			.pv-nav-tab {
 				background: transparent;
@@ -1153,16 +1223,62 @@ class PostViews_Settings {
 				text-decoration: none !important;
 				transition: all 0.15s ease;
 				cursor: pointer;
+				outline: none !important;
+				outline-width: 0 !important;
+				box-shadow: none !important;
+				-webkit-tap-highlight-color: transparent !important;
 			}
 			.pv-nav-tab:hover {
 				background: #f8fafc;
 				color: #0f172a;
+			}
+			.pv-nav-tab:focus,
+			.pv-nav-tab:focus-visible,
+			.pv-nav-tab:active {
+				outline: none !important;
+				outline-width: 0 !important;
+				box-shadow: none !important;
+				color: #64748b;
 			}
 			.pv-nav-tab.pv-nav-active {
 				background: #eff6ff;
 				color: #2563eb;
 				border-color: #bfdbfe;
 				font-weight: 600;
+			}
+			.pv-nav-tab.pv-nav-active:focus,
+			.pv-nav-tab.pv-nav-active:focus-visible,
+			.pv-nav-tab.pv-nav-active:active {
+				outline: none !important;
+				outline-width: 0 !important;
+				box-shadow: none !important;
+				color: #2563eb;
+				background: #eff6ff;
+				border-color: #bfdbfe;
+			}
+
+			/* Global Outline & Black-Box Suppression */
+			.pv-admin-wrap *:focus,
+			.pv-admin-wrap *:focus-visible,
+			.pv-admin-wrap a:focus,
+			.pv-admin-wrap a:focus-visible,
+			.pv-admin-wrap button:focus,
+			.pv-admin-wrap button:focus-visible,
+			.pv-admin-wrap input[type="submit"]:focus,
+			.pv-admin-wrap input[type="submit"]:focus-visible,
+			.pv-tab-content:focus,
+			.pv-tab-content:focus-visible,
+			.pv-tab-content:target,
+			.pv-card:focus,
+			.pv-card:focus-visible,
+			.pv-card:target,
+			.pv-style-option:focus,
+			.pv-style-preview:focus,
+			.pv-btn-save:focus,
+			.pv-btn-save:focus-visible {
+				outline: none !important;
+				outline-width: 0 !important;
+				-webkit-tap-highlight-color: transparent !important;
 			}
 
 			/* Cards */
@@ -1218,8 +1334,8 @@ class PostViews_Settings {
 			/* Style Selector Grid */
 			.pv-style-selector {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-				gap: 14px;
+				grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+				gap: 16px;
 				margin-top: 14px;
 			}
 			.pv-style-option {
@@ -1244,6 +1360,7 @@ class PostViews_Settings {
 				min-height: 84px;
 				position: relative;
 				overflow: hidden;
+				white-space: nowrap !important;
 			}
 			.pv-check-ribbon {
 				position: absolute;
@@ -1278,11 +1395,78 @@ class PostViews_Settings {
 				margin-bottom: 8px;
 			}
 			.pv-style-demo {
-				display: flex;
-				align-items: center;
-				justify-content: flex-start;
+				display: flex !important;
+				align-items: center !important;
+				justify-content: flex-start !important;
 				padding: 2px 0;
-				min-height: 40px;
+				height: 42px;
+				min-height: 42px;
+				width: 100%;
+				overflow-x: auto;
+				scrollbar-width: none;
+				white-space: nowrap !important;
+				flex-wrap: nowrap !important;
+			}
+			.pv-style-demo::-webkit-scrollbar {
+				display: none;
+			}
+
+			/* Universal Unified Capsule Height in Admin Preview - Strictly benchmarked to modern-card (38px) */
+			.pv-style-demo .pv-modern-card,
+			.pv-style-demo .pv-gradient-badge,
+			.pv-style-demo .pv-minimal-line,
+			.pv-style-demo .pv-stat-box,
+			.pv-style-demo .pv-glass-card,
+			.pv-style-demo .pv-outline-chip,
+			.pv-style-demo .pv-neon-pill,
+			.pv-style-demo .pv-sunset-pill,
+			.pv-style-demo .pv-solid-dark-pill,
+			.pv-modern-card,
+			.pv-gradient-badge,
+			.pv-minimal-line,
+			.pv-stat-box,
+			.pv-glass-card,
+			.pv-outline-chip,
+			.pv-neon-pill,
+			.pv-sunset-pill,
+			.pv-solid-dark-pill {
+				box-sizing: border-box !important;
+				height: 38px !important;
+				min-height: 38px !important;
+				max-height: 38px !important;
+				line-height: 1 !important;
+				white-space: nowrap !important;
+				flex-wrap: nowrap !important;
+				display: inline-flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				text-align: center !important;
+				flex-shrink: 0 !important;
+				margin: 0 !important;
+			}
+
+			/* Absolutely enforce no-wrap and center text inside capsule in admin preview */
+			.pv-style-demo *,
+			.pv-style-demo span,
+			.pv-style-demo div,
+			.pv-style-preview,
+			.pv-style-preview * {
+				white-space: nowrap !important;
+			}
+			.pv-style-demo .pv-content,
+			.pv-style-demo .pv-badge-text,
+			.pv-style-demo .pv-text,
+			.pv-style-demo .pv-stat-content,
+			.pv-style-demo .pv-glass-text,
+			.pv-style-demo .pv-neon-text,
+			.pv-style-demo .pv-sunset-text,
+			.pv-style-demo .pv-solid-text,
+			.pv-style-demo .pv-reading-meta {
+				display: inline-flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				text-align: center !important;
+				line-height: 1 !important;
 			}
 
 			/* Form Tables & Rows */
@@ -1749,6 +1933,9 @@ class PostViews_Settings {
 			tabs.forEach( function( tab ) {
 				tab.addEventListener( 'click', function( e ) {
 					e.preventDefault();
+					if ( typeof this.blur === 'function' ) {
+						this.blur();
+					}
 					var tabId = this.getAttribute( 'data-tab' );
 					activateTab( tabId );
 					if ( history.replaceState ) {
@@ -1762,6 +1949,21 @@ class PostViews_Settings {
 				activateTab( hash );
 			} else {
 				activateTab( 'tab-styles' );
+			}
+
+			// Clear any browser focus outline restored on reload or hash jump
+			if ( document.activeElement && document.activeElement !== document.body && typeof document.activeElement.blur === 'function' ) {
+				document.activeElement.blur();
+			}
+
+			// Suppress focus rect when submitting the settings form
+			var mainForm = document.getElementById( 'pv-main-form' );
+			if ( mainForm ) {
+				mainForm.addEventListener( 'submit', function () {
+					if ( document.activeElement && typeof document.activeElement.blur === 'function' ) {
+						document.activeElement.blur();
+					}
+				} );
 			}
 
 			// Style preset real-time radio change

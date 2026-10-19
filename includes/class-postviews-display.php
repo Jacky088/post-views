@@ -52,7 +52,7 @@ class PostViews_Display {
 	 * @return void
 	 */
 	public static function maybe_enqueue_kuaixun_injector() {
-		if ( ! is_singular( 'kuaixun' ) ) {
+		if ( ! is_singular( 'kuaixun' ) && 'kuaixun' !== get_post_type() ) {
 			return;
 		}
 		if ( 1 !== PostViews_Options::get_int( 'display_kuaixun_views' ) ) {
@@ -61,16 +61,24 @@ class PostViews_Display {
 
 		$post_id = (int) get_queried_object_id();
 		if ( $post_id <= 0 ) {
+			$post_id = (int) get_the_ID();
+		}
+		if ( $post_id <= 0 ) {
 			return;
 		}
 
-		$count = (int) get_post_meta( $post_id, 'views', true );
+		$count         = self::get_display_views( $post_id );
+		$rendered_html = self::render_count_template( $post_id );
+		$rendered_html = apply_filters( 'the_views', $rendered_html );
+
+		$script_file = dirname( WP_POSTVIEWS_MAIN_FILE ) . '/postviews-kuaixun.js';
+		$script_ver  = WP_POSTVIEWS_VERSION . ( file_exists( $script_file ) ? '.' . filemtime( $script_file ) : '' );
 
 		wp_register_script(
 			'post-views-kuaixun',
 			plugins_url( 'postviews-kuaixun.js', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
-			WP_POSTVIEWS_VERSION,
+			$script_ver,
 			true
 		);
 
@@ -81,6 +89,7 @@ class PostViews_Display {
 			array(
 				'post_id' => $post_id,
 				'count'   => $count,
+				'html'    => $rendered_html,
 			)
 		);
 	}
@@ -91,11 +100,14 @@ class PostViews_Display {
 	 * @return void
 	 */
 	public static function enqueue_styles() {
+		$style_file = dirname( WP_POSTVIEWS_MAIN_FILE ) . '/postviews-front.css';
+		$style_ver  = WP_POSTVIEWS_VERSION . ( file_exists( $style_file ) ? '.' . filemtime( $style_file ) : '' );
+
 		wp_enqueue_style(
 			'post-views-front',
 			plugins_url( 'postviews-front.css', WP_POSTVIEWS_MAIN_FILE ),
 			array(),
-			WP_POSTVIEWS_VERSION
+			$style_ver
 		);
 	}
 
@@ -120,6 +132,12 @@ class PostViews_Display {
 			$enabled_types = array( 'post', 'page' );
 		}
 		$current_post_type = get_post_type();
+
+		// Strictly exclude kuaixun from automatic content insertion (kuaixun uses its dedicated floating injector).
+		if ( 'kuaixun' === $current_post_type ) {
+			return $content;
+		}
+
 		if ( ! in_array( $current_post_type, $enabled_types, true ) ) {
 			return $content;
 		}
@@ -133,8 +151,20 @@ class PostViews_Display {
 			return $content;
 		}
 
-		// Wrap views in a positioned container for bottom-right placement.
-		$positioned_views = '<div class="pv-positioned-wrapper" data-postviews-id="' . esc_attr( (string) get_the_ID() ) . '">' . $views_html . '</div>';
+		$position = PostViews_Options::get( 'views_position', 'bottom-right' );
+		if ( ! in_array( $position, array( 'bottom-right', 'bottom-left', 'top-right', 'top-left' ), true ) ) {
+			$position = 'bottom-right';
+		}
+
+		$mode       = self::get_capsule_display_mode();
+		$mode_class = ( 0 === strpos( $mode, 'stats_' ) ) ? 'pv-mode-stats' : 'pv-mode-views';
+
+		// Wrap views in a positioned container according to user preference.
+		$positioned_views = '<div class="pv-positioned-wrapper pv-pos-' . esc_attr( $position ) . ' ' . esc_attr( $mode_class ) . '" data-pv-mode="' . esc_attr( $mode ) . '" data-postviews-id="' . esc_attr( (string) get_the_ID() ) . '">' . $views_html . '</div>';
+
+		if ( 'top-left' === $position || 'top-right' === $position ) {
+			return $positioned_views . $content;
+		}
 
 		return $content . $positioned_views;
 	}
@@ -231,7 +261,8 @@ class PostViews_Display {
 	 * @return mixed
 	 */
 	public static function filter_get_post_metadata( $value, $object_id, $meta_key, $single = false ) {
-		if ( 'views' !== $meta_key ) {
+		$target_keys = array( 'views', 'post_views_count', 'pageviews' );
+		if ( ! in_array( $meta_key, $target_keys, true ) ) {
 			return $value;
 		}
 
@@ -296,6 +327,36 @@ class PostViews_Display {
 	 * @param int $post_id Post ID.
 	 * @return string
 	 */
+	/**
+	 * Get current capsule display mode with backward compatibility.
+	 *
+	 * @return string One of: 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words'.
+	 */
+	public static function get_capsule_display_mode() {
+		$mode = PostViews_Options::get( 'capsule_display_mode', null );
+		if ( null === $mode ) {
+			// Fallback to legacy display_reading_stats option.
+			$legacy = PostViews_Options::get( 'display_reading_stats', 0 );
+			if ( 1 === (int) $legacy ) {
+				return 'both';
+			} elseif ( 2 === (int) $legacy ) {
+				return 'both_time';
+			} elseif ( 3 === (int) $legacy ) {
+				return 'both_words';
+			}
+			return 'views_only';
+		}
+
+		$allowed = array( 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words' );
+		return in_array( $mode, $allowed, true ) ? $mode : 'views_only';
+	}
+
+	/**
+	 * Substitute the count tokens into the single post template.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
 	public static function render_count_template( $post_id ) {
 		$post_views = self::get_display_views( $post_id );
 
@@ -303,14 +364,262 @@ class PostViews_Display {
 		$read_time_str = sprintf( _n( '%d 分钟', '%d 分钟', $stats['minutes'], 'post-views' ), $stats['minutes'] );
 		$words_str     = number_format_i18n( $stats['words'] );
 
+		$template = (string) PostViews_Options::get( 'template', '' );
+		if ( '' === trim( $template ) ) {
+			$current_style = PostViews_Options::get( 'template_style', 'minimal-line' );
+			$all_styles    = PostViews_Options::template_styles();
+			$template      = isset( $all_styles[ $current_style ] ) ? $all_styles[ $current_style ] : PostViews_Options::default_template( 'template' );
+		}
+
+		// Check capsule content display mode (strictly excluding kuaixun).
+		$mode = self::get_capsule_display_mode();
+		if ( 'kuaixun' !== get_post_type( $post_id ) && $stats['words'] > 0 ) {
+			if ( 0 === strpos( $mode, 'stats_' ) ) {
+				// Reading stats only (no view count in capsule).
+				$template = self::transform_template_for_stats_only( $template, $mode );
+			} elseif ( 0 === strpos( $mode, 'both' ) ) {
+				// Both view count and reading stats.
+				if ( false === strpos( $template, '%READ_TIME%' ) && false === strpos( $template, '%WORD_COUNT%' ) ) {
+					$template = self::inject_reading_stats_to_template( $template, $mode );
+				}
+			}
+		}
+
 		// wp_kses_post() at render, not just at save: the option row can also be
 		// written by PostViews_Options::save() or a direct update_option(),
 		// neither of which runs the settings screen's sanitize callback.
 		return str_replace(
 			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%', '%READ_TIME%', '%WORD_COUNT%' ),
 			array( number_format_i18n( $post_views ), self::round_number( $post_views ), $read_time_str, $words_str ),
-			wp_kses_post( (string) PostViews_Options::get( 'template', '' ) )
+			wp_kses_post( $template )
 		);
+	}
+
+	/**
+	 * Transform a template for reading-stats-only mode (replaces views count elements with stats).
+	 *
+	 * @param string $template HTML template.
+	 * @param string $mode     Mode: 'stats_only', 'stats_time', 'stats_words'.
+	 * @return string
+	 */
+	public static function transform_template_for_stats_only( $template, $mode ) {
+		if ( empty( $template ) || ! is_string( $template ) ) {
+			return $template;
+		}
+
+		$is_time_only  = ( 'stats_time' === $mode );
+		$is_words_only = ( 'stats_words' === $mode );
+
+		// 1. modern-card: <span class="pv-label">阅读量</span><span class="pv-number">%VIEW_COUNT%</span>
+		if ( false !== strpos( $template, 'pv-modern-card' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-number">%READ_TIME%</span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . ' <span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
+			}
+			$pattern = '/<span class="pv-label">.*?<\/span>\s*<span class="pv-number">%VIEW_COUNT%<\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 2. minimal-line: <span class="pv-text">%VIEW_COUNT% 次阅读</span>
+		if ( false !== strpos( $template, 'pv-minimal-line' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-text">' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-text">' . esc_html__( '全文约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-text">' . esc_html__( '约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
+			}
+			$pattern = '/<span class="pv-text">%VIEW_COUNT%[^<]*<\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 3. glass-card: <div class="pv-glass-text">本文阅读 <span class="pv-glass-count">%VIEW_COUNT%</span> 次</div>
+		if ( false !== strpos( $template, 'pv-glass-card' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<div class="pv-glass-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <span class="pv-glass-count">%READ_TIME%</span></div>';
+			} elseif ( $is_words_only ) {
+				$rep = '<div class="pv-glass-text">' . esc_html__( '本文全文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '</div>';
+			} else {
+				$rep = '<div class="pv-glass-text">' . esc_html__( '本文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></div>';
+			}
+			$pattern = '/<div class="pv-glass-text">.*?<span class="pv-glass-count">%VIEW_COUNT%<\/span>.*?<\/div>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 4. gradient-badge: <span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> 次热度</span>
+		if ( false !== strpos( $template, 'pv-gradient-badge' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-badge-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-badge-text">' . esc_html__( '全文约', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-badge-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
+			}
+			$pattern = '/<span class="pv-badge-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 5. outline-chip: <span class="pv-chip-label">浏览</span><span class="pv-chip-count">%VIEW_COUNT%</span>
+		if ( false !== strpos( $template, 'pv-outline-chip' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-chip-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-chip-count">%READ_TIME%</span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span>';
+			} else {
+				$rep = '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span><span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
+			}
+			$pattern = '/<span class="pv-chip-label">.*?<\/span>\s*<span class="pv-chip-count">%VIEW_COUNT%<\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 6. neon-pill: <span class="pv-neon-text">浏览 <strong>%VIEW_COUNT%</strong></span>
+		if ( false !== strpos( $template, 'pv-neon-pill' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-neon-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
+			}
+			$pattern = '/<span class="pv-neon-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 7. sunset-pill: <span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> 次浏览</span>
+		if ( false !== strpos( $template, 'pv-sunset-pill' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-sunset-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
+			}
+			$pattern = '/<span class="pv-sunset-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 8. solid-dark-pill: <span class="pv-solid-text">阅读量 <strong>%VIEW_COUNT%</strong></span>
+		if ( false !== strpos( $template, 'pv-solid-dark-pill' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<span class="pv-solid-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
+			} elseif ( $is_words_only ) {
+				$rep = '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
+			} else {
+				$rep = '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
+			}
+			$pattern = '/<span class="pv-solid-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// 9. stat-box: <div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">浏览统计</div>
+		if ( false !== strpos( $template, 'pv-stat-box' ) ) {
+			if ( $is_time_only ) {
+				$rep = '<div class="pv-stat-value">%READ_TIME%</div><div class="pv-stat-label">' . esc_html__( '预计阅读', 'post-views' ) . '</div>';
+			} elseif ( $is_words_only ) {
+				$rep = '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '文章字数', 'post-views' ) . '</div>';
+			} else {
+				$rep = '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '字数 · 预计阅读 ', 'post-views' ) . '%READ_TIME%</div>';
+			}
+			$pattern = '/<div class="pv-stat-value">%VIEW_COUNT_ROUNDED%<\/div>\s*<div class="pv-stat-label">.*?<\/div>/u';
+			if ( preg_match( $pattern, $template ) ) {
+				return preg_replace( $pattern, $rep, $template, 1 );
+			}
+		}
+
+		// Generic fallback: replace %VIEW_COUNT% with stats.
+		if ( $is_time_only ) {
+			return str_replace( '%VIEW_COUNT%', '预计阅读 %READ_TIME%', $template );
+		} elseif ( $is_words_only ) {
+			return str_replace( '%VIEW_COUNT%', '%WORD_COUNT%', $template );
+		}
+		return str_replace( '%VIEW_COUNT%', '%WORD_COUNT% 字 · 预计阅读 %READ_TIME%', $template );
+	}
+
+	/**
+	 * Automatically inject reading stats markup into a template if not manually present.
+	 *
+	 * @param string     $template     HTML template.
+	 * @param string|int $reading_mode Display mode: 'both', 'both_time', 'both_words' or 1, 2, 3.
+	 * @return string
+	 */
+	public static function inject_reading_stats_to_template( $template, $reading_mode ) {
+		if ( empty( $template ) || ! is_string( $template ) ) {
+			return $template;
+		}
+
+		$meta_text = '';
+		if ( 'both_time' === $reading_mode || 2 === $reading_mode || '2' === $reading_mode ) {
+			// Reading time only.
+			$meta_text = '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
+		} elseif ( 'both_words' === $reading_mode || 3 === $reading_mode || '3' === $reading_mode ) {
+			// Word count only.
+			$meta_text = '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '全文约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '</span>';
+		} else {
+			// Both word count and reading time.
+			$meta_text = '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . ' <span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
+		}
+
+		if ( empty( $meta_text ) ) {
+			return $template;
+		}
+
+		// Targeted injection markers for the 9 built-in presets.
+		$targets = array(
+			// modern-card
+			'<span class="pv-number">%VIEW_COUNT%</span>' => '<span class="pv-number">%VIEW_COUNT%</span>' . $meta_text,
+			// minimal-line
+			__( '次阅读', 'post-views' ) . '</span>' => __( '次阅读', 'post-views' ) . $meta_text . '</span>',
+			'次阅读</span>' => '次阅读' . $meta_text . '</span>',
+			// gradient-badge
+			__( '次热度', 'post-views' ) . '</span>' => __( '次热度', 'post-views' ) . $meta_text . '</span>',
+			'次热度</span>' => '次热度' . $meta_text . '</span>',
+			// glass-card
+			__( '次', 'post-views' ) . '</div>' => __( '次', 'post-views' ) . $meta_text . '</div>',
+			'次</div>' => '次' . $meta_text . '</div>',
+			// outline-chip
+			'<span class="pv-chip-count">%VIEW_COUNT%</span>' => '<span class="pv-chip-count">%VIEW_COUNT%</span>' . $meta_text,
+			// neon-pill & solid-dark-pill
+			'<strong>%VIEW_COUNT%</strong>' => '<strong>%VIEW_COUNT%</strong>' . $meta_text,
+			// sunset-pill
+			__( '次浏览', 'post-views' ) . '</span>' => __( '次浏览', 'post-views' ) . $meta_text . '</span>',
+			'次浏览</span>' => '次浏览' . $meta_text . '</span>',
+			// stat-box
+			'<div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div>' => '<div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . ' ' . $meta_text . '</div>',
+			'<div class="pv-stat-label">浏览统计</div>' => '<div class="pv-stat-label">浏览统计 ' . $meta_text . '</div>',
+		);
+
+		foreach ( $targets as $needle => $replacement ) {
+			if ( false !== strpos( $template, $needle ) ) {
+				return str_replace( $needle, $replacement, $template );
+			}
+		}
+
+		// Generic fallback: inject right before the last closing tag.
+		$last_close = strrpos( $template, '</' );
+		if ( false !== $last_close ) {
+			return substr_replace( $template, $meta_text . substr( $template, $last_close ), $last_close );
+		}
+
+		return $template . $meta_text;
 	}
 
 	/**

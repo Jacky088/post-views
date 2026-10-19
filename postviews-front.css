@@ -15,15 +15,43 @@
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* Positioned Wrapper - 定位容器 */
+/* Positioned Wrapper - 定位容器 (支持左上、右上、左下、右下) */
 .pv-positioned-wrapper {
-	position: relative;
+	box-sizing: border-box;
+	clear: both;
 	width: 100%;
-	min-height: 48px;
-	margin: 2em 0 0 0;
 	display: flex;
+	align-items: center;
+	position: relative;
+	z-index: 2;
+	line-height: normal;
+}
+
+.pv-positioned-wrapper.pv-pos-top-left {
+	justify-content: flex-start;
+	margin: 0 0 1.25em 0;
+}
+
+.pv-positioned-wrapper.pv-pos-top-right {
 	justify-content: flex-end;
-	align-items: flex-start;
+	margin: 0 0 1.25em 0;
+}
+
+.pv-positioned-wrapper.pv-pos-bottom-left {
+	justify-content: flex-start;
+	margin: 1.5em 0 0 0;
+}
+
+.pv-positioned-wrapper.pv-pos-bottom-right,
+.pv-positioned-wrapper:not([class*="pv-pos-"]) {
+	justify-content: flex-end;
+	margin: 1.5em 0 0 0;
+}
+
+/* Standalone Gutenberg block wrapper */
+.pv-block-counter {
+	margin: 1em 0;
+	justify-content: flex-start;
 }
 
 /* Detect common content containers and make them position: relative */
@@ -40,6 +68,81 @@ article .content,
 	position: relative;
 }
 
+/* ===============================================================
+ * Universal Unified Capsule Height & No-Wrap & Center Alignment
+ * Benchmark: modern-card (38px)
+ * =============================================================== */
+.pv-modern-card,
+.pv-gradient-badge,
+.pv-minimal-line,
+.pv-stat-box,
+.pv-glass-card,
+.pv-outline-chip,
+.pv-neon-pill,
+.pv-sunset-pill,
+.pv-solid-dark-pill {
+	box-sizing: border-box !important;
+	height: 38px !important;
+	min-height: 38px !important;
+	max-height: 38px !important;
+	line-height: 1 !important;
+	white-space: nowrap !important;
+	flex-wrap: nowrap !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	text-align: center !important;
+	flex-shrink: 0 !important;
+}
+
+/* Enforce absolute no-wrap on all capsule text & children across front and admin */
+.pv-modern-card *,
+.pv-gradient-badge *,
+.pv-minimal-line *,
+.pv-stat-box *,
+.pv-glass-card *,
+.pv-outline-chip *,
+.pv-neon-pill *,
+.pv-sunset-pill *,
+.pv-solid-dark-pill *,
+.pv-positioned-wrapper,
+.pv-positioned-wrapper *,
+.kx-views-wrap,
+.kx-views-wrap * {
+	white-space: nowrap !important;
+}
+
+/* ---------------------------------------------------------------
+ * Reading Stats Metadata (字数与预计阅读时间)
+ * --------------------------------------------------------------- */
+.pv-reading-meta {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	text-align: center !important;
+	font-weight: 400;
+	opacity: 0.85;
+	margin-left: 2px;
+	letter-spacing: 0;
+	white-space: nowrap !important;
+	font-size: 0.92em;
+	vertical-align: middle;
+	line-height: 1 !important;
+	flex-shrink: 0 !important;
+}
+
+.pv-reading-meta .pv-meta-dot {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	text-align: center !important;
+	margin: 0 4px;
+	opacity: 0.55;
+	font-weight: 700;
+	line-height: 1 !important;
+	flex-shrink: 0 !important;
+}
+
 /* ---------------------------------------------------------------
  * 1. Modern Card - 现代钛金 (Linear / Vercel Titanium Pulse)
  * --------------------------------------------------------------- */
@@ -48,7 +151,7 @@ article .content,
 	align-items: center;
 	gap: 10px;
 	margin: 0;
-	padding: 6px 14px 6px 8px;
+	padding: 0 14px 0 8px;
 	background: #0f172a;
 	background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
 	border-radius: 9999px;
@@ -58,7 +161,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
 }
@@ -79,25 +181,40 @@ article .content,
 	background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
 	border: 1px solid rgba(129, 140, 248, 0.35);
 	color: #a5b4fc;
+	flex-shrink: 0;
 }
 
 .pv-modern-card .pv-content {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 6px;
+	line-height: 1 !important;
 }
 
 .pv-modern-card .pv-label {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: #94a3b8;
 	font-size: 12px;
 	font-weight: 400;
 	letter-spacing: 0.02em;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 .pv-modern-card .pv-number {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: #ffffff;
 	font-weight: 700;
 	letter-spacing: -0.01em;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -117,7 +234,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	overflow: hidden;
 	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
@@ -133,23 +249,33 @@ article .content,
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 7px 10px;
+	padding: 0 12px;
+	height: 100%;
+	align-self: stretch;
 	background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
 	color: #ffffff;
+	flex-shrink: 0;
 }
 
 .pv-gradient-badge .pv-badge-text {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 4px;
-	padding: 6px 12px 6px 8px;
+	padding: 0 14px 0 10px;
+	height: 100%;
 	color: #475569;
 	font-size: 13px;
+	line-height: 1 !important;
 }
 
 .pv-gradient-badge .pv-badge-text strong {
 	color: #e11d48;
 	font-weight: 700;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -160,7 +286,7 @@ article .content,
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 5px 14px;
+	padding: 0 16px;
 	background: rgba(15, 23, 42, 0.03);
 	border: 1px solid rgba(15, 23, 42, 0.09);
 	border-radius: 9999px;
@@ -168,7 +294,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.2s ease;
 	user-select: none;
 }
@@ -184,19 +309,27 @@ article .content,
 	align-items: center;
 	justify-content: center;
 	color: #64748b;
+	flex-shrink: 0;
 }
 
 .pv-minimal-line .pv-divider {
 	display: inline-block;
 	width: 1px;
-	height: 10px;
+	height: 12px;
 	background: rgba(15, 23, 42, 0.15);
+	flex-shrink: 0;
 }
 
 .pv-minimal-line .pv-text {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	color: #334155;
 	font-weight: 600;
 	letter-spacing: -0.01em;
+	line-height: 1 !important;
 }
 
 /* ---------------------------------------------------------------
@@ -207,7 +340,7 @@ article .content,
 	align-items: center;
 	gap: 9px;
 	margin: 0;
-	padding: 5px 12px 5px 6px;
+	padding: 0 14px 0 6px;
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
@@ -216,7 +349,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
 }
@@ -236,26 +368,41 @@ article .content,
 	background: #eff6ff;
 	border-radius: 6px;
 	color: #2563eb;
+	flex-shrink: 0;
 }
 
 .pv-stat-box .pv-stat-content {
 	display: inline-flex;
-	align-items: baseline;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 6px;
+	line-height: 1 !important;
 }
 
 .pv-stat-box .pv-stat-value {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: #0f172a;
 	font-size: 14px;
 	font-weight: 700;
 	letter-spacing: -0.02em;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 .pv-stat-box .pv-stat-label {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: #64748b;
 	font-size: 11px;
 	font-weight: 500;
 	letter-spacing: 0.02em;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -266,7 +413,7 @@ article .content,
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 6px 14px;
+	padding: 0 16px;
 	background: rgba(255, 255, 255, 0.65);
 	backdrop-filter: blur(16px) saturate(180%);
 	-webkit-backdrop-filter: blur(16px) saturate(180%);
@@ -277,7 +424,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.25s ease;
 	user-select: none;
 }
@@ -293,18 +439,28 @@ article .content,
 	align-items: center;
 	justify-content: center;
 	color: #0284c7;
+	flex-shrink: 0;
 }
 
 .pv-glass-card .pv-glass-text {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 3px;
 	color: #475569;
+	line-height: 1 !important;
 }
 
 .pv-glass-card .pv-glass-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: #0284c7;
 	font-weight: 700;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -315,7 +471,7 @@ article .content,
 	align-items: center;
 	gap: 6px;
 	margin: 0;
-	padding: 5px 12px;
+	padding: 0 14px;
 	background: #ffffff;
 	border: 1.5px solid #4f46e5;
 	border-radius: 9999px;
@@ -323,7 +479,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
 }
@@ -339,20 +494,31 @@ article .content,
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex-shrink: 0;
 }
 
 .pv-outline-chip .pv-chip-label {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-size: 12px;
 	font-weight: 500;
 	opacity: 0.9;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 .pv-outline-chip .pv-chip-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-weight: 700;
-	padding: 1px 6px;
+	padding: 2px 7px;
 	background: rgba(79, 70, 229, 0.1);
 	border-radius: 4px;
 	transition: background 0.2s, color 0.2s;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 .pv-outline-chip:hover .pv-chip-count {
@@ -368,7 +534,7 @@ article .content,
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 6px 14px;
+	padding: 0 16px;
 	background: #030712;
 	border: 1px solid rgba(6, 182, 212, 0.45);
 	border-radius: 9999px;
@@ -377,7 +543,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.25s ease;
 	user-select: none;
 }
@@ -394,19 +559,26 @@ article .content,
 	justify-content: center;
 	color: #22d3ee;
 	filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.7));
+	flex-shrink: 0;
 }
 
 .pv-neon-pill .pv-neon-text {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 5px;
 	color: #67e8f9;
+	line-height: 1 !important;
 }
 
 .pv-neon-pill .pv-neon-text strong {
 	color: #ffffff;
 	font-weight: 700;
 	text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -417,7 +589,7 @@ article .content,
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 6px 14px;
+	padding: 0 16px;
 	background: linear-gradient(135deg, #f43f5e 0%, #fb923c 60%, #fbbf24 100%);
 	border-radius: 9999px;
 	border: 1px solid rgba(255, 255, 255, 0.25);
@@ -426,7 +598,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
 }
@@ -442,19 +613,26 @@ article .content,
 	justify-content: center;
 	color: #fff7ed;
 	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+	flex-shrink: 0;
 }
 
 .pv-sunset-pill .pv-sunset-text {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 4px;
 	color: #ffffff;
 	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+	line-height: 1 !important;
 }
 
 .pv-sunset-pill .pv-sunset-text strong {
 	font-weight: 800;
 	letter-spacing: -0.01em;
+	line-height: 1 !important;
+	white-space: nowrap !important;
 }
 
 /* ---------------------------------------------------------------
@@ -465,7 +643,7 @@ article .content,
 	align-items: center;
 	gap: 8px;
 	margin: 0;
-	padding: 6px 14px 6px 10px;
+	padding: 0 16px 0 12px;
 	background: #090d16;
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 9999px;
@@ -474,7 +652,6 @@ article .content,
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
 	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	user-select: none;
 }
@@ -522,8 +699,12 @@ article .content,
 .pv-solid-dark-pill .pv-solid-text {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: nowrap !important;
 	gap: 5px;
 	color: #94a3b8;
+	line-height: 1 !important;
 }
 
 .pv-solid-dark-pill .pv-solid-text strong {
@@ -779,56 +960,48 @@ html.dark .pv-gradient-badge .pv-badge-text strong {
 }
 
 /* ================================================================
- * JustNews kuaixun bottom-right placement
+ * JustNews kuaixun bottom-right placement (独立绝对定位，不受正文定位影响)
  * ================================================================ */
 .kx-views-wrap {
-	position: absolute;
-	right: 8px;
-	bottom: 8px;
+	position: absolute !important;
+	right: 8px !important;
+	bottom: 8px !important;
+	width: auto !important;
+	min-height: 0 !important;
+	margin: 0 !important;
 	z-index: 5;
 	max-width: 70%;
 	pointer-events: none;
+	display: block !important;
 }
 
-.kx-views-wrap .kx-views {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 6px 12px;
-	border-radius: 9999px;
-	background: rgba(255, 255, 255, 0.94);
+.kx-views-wrap > * {
+	pointer-events: auto;
+}
+
+.kx-views-wrap .pv-minimal-line,
+.kx-views-wrap .pv-modern-card,
+.kx-views-wrap .pv-gradient-badge,
+.kx-views-wrap .pv-stat-box,
+.kx-views-wrap .pv-glass-card,
+.kx-views-wrap .pv-outline-chip,
+.kx-views-wrap .pv-neon-pill,
+.kx-views-wrap .pv-sunset-pill,
+.kx-views-wrap .pv-solid-dark-pill {
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.kx-views-wrap .pv-minimal-line {
+	background: rgba(255, 255, 255, 0.95);
 	backdrop-filter: blur(8px);
 	-webkit-backdrop-filter: blur(8px);
-	border: 1px solid rgba(0, 0, 0, 0.06);
-	color: #334155;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 1;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-	pointer-events: auto;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.kx-views-wrap .kx-views .kx-views-icon {
-	display: inline-block;
-	width: 14px;
-	height: 14px;
-	color: #4f46e5;
-}
-
-.kx-views-wrap .kx-views:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
-	.kx-views-wrap .kx-views {
-		background: rgba(15, 23, 42, 0.9);
-		border-color: rgba(255, 255, 255, 0.1);
-		color: #e2e8f0;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-	}
-	.kx-views-wrap .kx-views .kx-views-icon {
-		color: #818cf8;
+	.kx-views-wrap .pv-minimal-line {
+		background: rgba(15, 23, 42, 0.92);
+		border-color: rgba(255, 255, 255, 0.18);
+		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
 	}
 }

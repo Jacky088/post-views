@@ -178,6 +178,9 @@ class PostViews_Options {
 			'template_style'          => 'minimal-line',
 			'enabled_post_types'      => array( 'post', 'page' ),
 			'display_kuaixun_views'   => 0,
+			'views_position'          => 'bottom-right',
+			'capsule_display_mode'    => 'views_only', // 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words'
+			'display_reading_stats'   => 0, // legacy fallback
 		);
 	}
 
@@ -188,11 +191,11 @@ class PostViews_Options {
 	 */
 	public static function template_styles() {
 		return array(
-			'modern-card'     => '<div class="pv-modern-card"><span class="pv-icon-circle"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="pv-content"><span class="pv-label">' . __( '阅读量', 'post-views' ) . '</span><span class="pv-number">%VIEW_COUNT%</span></div></div>',
+			'modern-card'     => '<div class="pv-modern-card"><span class="pv-icon-circle"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><div class="pv-content"><span class="pv-label">' . __( '阅读量', 'post-views' ) . '</span><span class="pv-number">%VIEW_COUNT%</span></div></div>',
 			'gradient-badge'  => '<div class="pv-gradient-badge"><span class="pv-badge-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg></span><span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> ' . __( '次热度', 'post-views' ) . '</span></div>',
-			'minimal-line'    => '<div class="pv-minimal-line"><span class="pv-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="pv-divider"></span><span class="pv-text">%VIEW_COUNT% ' . __( '次浏览', 'post-views' ) . '</span></div>',
+			'minimal-line'    => '<div class="pv-minimal-line"><span class="pv-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="pv-divider"></span><span class="pv-text">%VIEW_COUNT% ' . __( '次阅读', 'post-views' ) . '</span></div>',
 			'stat-box'        => '<div class="pv-stat-box"><div class="pv-stat-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div><div class="pv-stat-content"><div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">' . __( '浏览统计', 'post-views' ) . '</div></div></div>',
-			'glass-card'      => '<div class="pv-glass-card"><div class="pv-glass-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
+			'glass-card'      => '<div class="pv-glass-card"><div class="pv-glass-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="pv-glass-text">' . __( '本文阅读', 'post-views' ) . ' <span class="pv-glass-count">%VIEW_COUNT%</span> ' . __( '次', 'post-views' ) . '</div></div>',
 			'outline-chip'    => '<div class="pv-outline-chip"><span class="pv-chip-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg></span><span class="pv-chip-label">' . __( '浏览', 'post-views' ) . '</span><span class="pv-chip-count">%VIEW_COUNT%</span></div>',
 			'neon-pill'       => '<div class="pv-neon-pill"><span class="pv-neon-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span><span class="pv-neon-text">' . __( '浏览', 'post-views' ) . ' <strong>%VIEW_COUNT%</strong></span></div>',
 			'sunset-pill'     => '<div class="pv-sunset-pill"><span class="pv-sunset-icon"><svg class="pv-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span><span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> ' . __( '次浏览', 'post-views' ) . '</span></div>',
@@ -235,6 +238,20 @@ class PostViews_Options {
 				$stored = array();
 			}
 			self::$cache = array_merge( self::defaults(), $stored );
+
+			// Smoothly upgrade any old sharp eye SVG to Open Book in saved templates.
+			if ( isset( self::$cache['template'] ) && is_string( self::$cache['template'] ) ) {
+				$old_eyes = array(
+					'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+					'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+				);
+				$book_path = '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>';
+				foreach ( $old_eyes as $old_eye ) {
+					if ( false !== strpos( self::$cache['template'], $old_eye ) ) {
+						self::$cache['template'] = str_replace( $old_eye, $book_path, self::$cache['template'] );
+					}
+				}
+			}
 		}
 
 		return self::$cache;
