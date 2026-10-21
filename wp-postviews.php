@@ -3,7 +3,7 @@
  * Plugin Name: Post Views
  * Plugin URI: https://github.com/Jacky088/post-views
  * Description: 统计并展示文章/页面的浏览次数。
- * Version: 2.1.0
+ * Version: 2.1.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: 木木
@@ -23,11 +23,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 // Version.
-define( 'WP_POSTVIEWS_VERSION', '2.1.0' );
+define( 'WP_POSTVIEWS_VERSION', '2.1.1' );
 define( 'WP_POSTVIEWS_MAIN_FILE', __FILE__ );
 
-// Block WordPress.org update checks for this plugin.
+// Block WordPress.org update checks for this plugin. Sites that install it
+// from GitHub can turn this off with the postviews_block_wporg_updates filter.
 add_filter( 'site_transient_update_plugins', function ( $transient ) {
+	if ( ! apply_filters( 'postviews_block_wporg_updates', true ) ) {
+		return $transient;
+	}
+
 	$plugin_basename = plugin_basename( __FILE__ );
 	if ( isset( $transient->response[ $plugin_basename ] ) ) {
 		unset( $transient->response[ $plugin_basename ] );

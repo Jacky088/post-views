@@ -130,7 +130,7 @@ class PostViews_Query {
 		// wp_kses_post() at render, not just at save: the option row can also be
 		// written by PostViews_Options::save() or a direct update_option(),
 		// neither of which runs the settings screen's sanitize callback.
-		$template = wp_kses_post( (string) PostViews_Options::get( 'most_viewed_template', '' ) );
+		$template = PostViews_Options::kses( (string) PostViews_Options::get( 'most_viewed_template', '' ) );
 		if ( '' === $template ) {
 			$template = PostViews_Options::default_template( 'most_viewed_template' );
 		}

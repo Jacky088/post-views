@@ -63,9 +63,25 @@ class PostViews_Options {
 		// would otherwise keep serving the value from before the write.
 		add_action( 'add_option_' . self::OPTION, array( __CLASS__, 'flush' ) );
 		add_action( 'update_option_' . self::OPTION, array( __CLASS__, 'flush' ) );
+	}
 
-		// Whitelist SVG vector icons in template markup when passed through wp_kses_post().
+	/**
+	 * Run template markup through wp_kses_post() with SVG tags allowed.
+	 *
+	 * The whitelist used to be installed globally for the whole request, which
+	 * also loosened sanitising for every other plugin on the page. It is scoped
+	 * to this call instead: the filter goes on, wp_kses_post() runs, and the
+	 * filter comes straight back off.
+	 *
+	 * @param string $html Markup to sanitize.
+	 * @return string
+	 */
+	public static function kses( $html ) {
 		add_filter( 'wp_kses_allowed_html', array( __CLASS__, 'filter_allowed_html' ), 10, 2 );
+		$clean = wp_kses_post( $html );
+		remove_filter( 'wp_kses_allowed_html', array( __CLASS__, 'filter_allowed_html' ), 10 );
+
+		return $clean;
 	}
 
 	/**
@@ -157,7 +173,7 @@ class PostViews_Options {
 			'scroll_depth'            => 0, // Minimum scroll depth percentage before counting (0 = immediate).
 			'exclude_bots'            => 0,
 			'api_transport'           => 'rest', // 'rest' = REST API, 'ajax' = admin-ajax.php
-			'enable_buffer'           => 0, // 0 = direct write, 1 = transient buffer pool
+			'enable_buffer'           => 0, // 0 = direct write, 1 = object-cache buffer pool
 			'buffer_threshold'        => 50, // Batch flush threshold
 			'words_per_minute'        => 300, // Average reading speed for %READ_TIME%
 			'enable_meta_box'         => 1, // 1 = show post edit meta box, 0 = hide
@@ -296,7 +312,7 @@ class PostViews_Options {
 
 		foreach ( array( 'template', 'most_viewed_template' ) as $key ) {
 			if ( isset( $values[ $key ] ) && is_string( $values[ $key ] ) ) {
-				$values[ $key ] = wp_kses_post( $values[ $key ] );
+				$values[ $key ] = self::kses( $values[ $key ] );
 			}
 		}
 

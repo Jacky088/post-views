@@ -275,6 +275,15 @@ class PostViews_Display {
 			return $value;
 		}
 
+		// The REST API reports the stored count: a client asking for the raw
+		// field should not receive the decorated (multiplier + offset) number.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return $value;
+		}
+		if ( function_exists( 'wp_is_serving_rest_request' ) && wp_is_serving_rest_request() ) {
+			return $value;
+		}
+
 		$display_views = self::get_display_views( $object_id );
 
 		return $single ? (string) $display_views : array( (string) $display_views );
@@ -322,32 +331,14 @@ class PostViews_Display {
 	}
 
 	/**
-	 * Substitute the count tokens into the single post template.
-	 *
-	 * @param int $post_id Post ID.
-	 * @return string
-	 */
-	/**
-	 * Get current capsule display mode with backward compatibility.
+	 * Get the current capsule display mode.
 	 *
 	 * @return string One of: 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words'.
 	 */
 	public static function get_capsule_display_mode() {
-		$mode = PostViews_Options::get( 'capsule_display_mode', null );
-		if ( null === $mode ) {
-			// Fallback to legacy display_reading_stats option.
-			$legacy = PostViews_Options::get( 'display_reading_stats', 0 );
-			if ( 1 === (int) $legacy ) {
-				return 'both';
-			} elseif ( 2 === (int) $legacy ) {
-				return 'both_time';
-			} elseif ( 3 === (int) $legacy ) {
-				return 'both_words';
-			}
-			return 'views_only';
-		}
-
+		$mode    = PostViews_Options::get( 'capsule_display_mode', 'views_only' );
 		$allowed = array( 'views_only', 'both', 'both_time', 'both_words', 'stats_only', 'stats_time', 'stats_words' );
+
 		return in_array( $mode, $allowed, true ) ? $mode : 'views_only';
 	}
 
@@ -391,7 +382,7 @@ class PostViews_Display {
 		return str_replace(
 			array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%', '%READ_TIME%', '%WORD_COUNT%' ),
 			array( number_format_i18n( $post_views ), self::round_number( $post_views ), $read_time_str, $words_str ),
-			wp_kses_post( $template )
+			PostViews_Options::kses( $template )
 		);
 	}
 
@@ -407,148 +398,87 @@ class PostViews_Display {
 			return $template;
 		}
 
-		$is_time_only  = ( 'stats_time' === $mode );
-		$is_words_only = ( 'stats_words' === $mode );
-
-		// 1. modern-card: <span class="pv-label">阅读量</span><span class="pv-number">%VIEW_COUNT%</span>
-		if ( false !== strpos( $template, 'pv-modern-card' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-number">%READ_TIME%</span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . ' <span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
-			}
-			$pattern = '/<span class="pv-label">.*?<\/span>\s*<span class="pv-number">%VIEW_COUNT%<\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
+		$key = 'both';
+		if ( 'stats_time' === $mode ) {
+			$key = 'time';
+		} elseif ( 'stats_words' === $mode ) {
+			$key = 'words';
 		}
 
-		// 2. minimal-line: <span class="pv-text">%VIEW_COUNT% 次阅读</span>
-		if ( false !== strpos( $template, 'pv-minimal-line' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-text">' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-text">' . esc_html__( '全文约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-text">' . esc_html__( '约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
-			}
-			$pattern = '/<span class="pv-text">%VIEW_COUNT%[^<]*<\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
+		// One entry per preset: the class that identifies it, the markup that
+		// holds the number, and the replacement for each of the three modes.
+		$presets = array(
+			'pv-modern-card'     => array(
+				'pattern' => '/<span class="pv-label">.*?<\/span>\s*<span class="pv-number">%VIEW_COUNT%<\/span>/u',
+				'time'    => '<span class="pv-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-number">%READ_TIME%</span>',
+				'words'   => '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-label">' . esc_html__( '全文', 'post-views' ) . '</span><span class="pv-number">%WORD_COUNT%</span><span class="pv-reading-meta">' . esc_html__( '字', 'post-views' ) . ' <span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>',
+			),
+			'pv-minimal-line'   => array(
+				'pattern' => '/<span class="pv-text">%VIEW_COUNT%[^<]*<\/span>/u',
+				'time'    => '<span class="pv-text">' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>',
+				'words'   => '<span class="pv-text">' . esc_html__( '全文约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-text">' . esc_html__( '约', 'post-views' ) . ' %WORD_COUNT% ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>',
+			),
+			'pv-glass-card'     => array(
+				'pattern' => '/<div class="pv-glass-text">.*?<span class="pv-glass-count">%VIEW_COUNT%<\/span>.*?<\/div>/u',
+				'time'    => '<div class="pv-glass-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <span class="pv-glass-count">%READ_TIME%</span></div>',
+				'words'   => '<div class="pv-glass-text">' . esc_html__( '本文全文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '</div>',
+				'both'    => '<div class="pv-glass-text">' . esc_html__( '本文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></div>',
+			),
+			'pv-gradient-badge' => array(
+				'pattern' => '/<span class="pv-badge-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u',
+				'time'    => '<span class="pv-badge-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>',
+				'words'   => '<span class="pv-badge-text">' . esc_html__( '全文约', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-badge-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>',
+			),
+			'pv-outline-chip'   => array(
+				'pattern' => '/<span class="pv-chip-label">.*?<\/span>\s*<span class="pv-chip-count">%VIEW_COUNT%<\/span>/u',
+				'time'    => '<span class="pv-chip-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-chip-count">%READ_TIME%</span>',
+				'words'   => '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span>',
+				'both'    => '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span><span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>',
+			),
+			'pv-neon-pill'      => array(
+				'pattern' => '/<span class="pv-neon-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u',
+				'time'    => '<span class="pv-neon-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>',
+				'words'   => '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>',
+			),
+			'pv-sunset-pill'    => array(
+				'pattern' => '/<span class="pv-sunset-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u',
+				'time'    => '<span class="pv-sunset-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>',
+				'words'   => '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>',
+			),
+			'pv-solid-dark-pill' => array(
+				'pattern' => '/<span class="pv-solid-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u',
+				'time'    => '<span class="pv-solid-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>',
+				'words'   => '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>',
+				'both'    => '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>',
+			),
+			'pv-stat-box'      => array(
+				'pattern' => '/<div class="pv-stat-value">%VIEW_COUNT_ROUNDED%<\/div>\s*<div class="pv-stat-label">.*?<\/div>/u',
+				'time'    => '<div class="pv-stat-value">%READ_TIME%</div><div class="pv-stat-label">' . esc_html__( '预计阅读', 'post-views' ) . '</div>',
+				'words'   => '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '文章字数', 'post-views' ) . '</div>',
+				'both'    => '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '字数 · 预计阅读 ', 'post-views' ) . '%READ_TIME%</div>',
+			),
+		);
 
-		// 3. glass-card: <div class="pv-glass-text">本文阅读 <span class="pv-glass-count">%VIEW_COUNT%</span> 次</div>
-		if ( false !== strpos( $template, 'pv-glass-card' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<div class="pv-glass-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <span class="pv-glass-count">%READ_TIME%</span></div>';
-			} elseif ( $is_words_only ) {
-				$rep = '<div class="pv-glass-text">' . esc_html__( '本文全文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '</div>';
-			} else {
-				$rep = '<div class="pv-glass-text">' . esc_html__( '本文约', 'post-views' ) . ' <span class="pv-glass-count">%WORD_COUNT%</span> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></div>';
+		foreach ( $presets as $class => $preset ) {
+			if ( false === strpos( $template, $class ) ) {
+				continue;
 			}
-			$pattern = '/<div class="pv-glass-text">.*?<span class="pv-glass-count">%VIEW_COUNT%<\/span>.*?<\/div>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
 
-		// 4. gradient-badge: <span class="pv-badge-text"><strong>%VIEW_COUNT%</strong> 次热度</span>
-		if ( false !== strpos( $template, 'pv-gradient-badge' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-badge-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-badge-text">' . esc_html__( '全文约', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-badge-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
-			}
-			$pattern = '/<span class="pv-badge-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
-
-		// 5. outline-chip: <span class="pv-chip-label">浏览</span><span class="pv-chip-count">%VIEW_COUNT%</span>
-		if ( false !== strpos( $template, 'pv-outline-chip' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-chip-label">' . esc_html__( '预计阅读', 'post-views' ) . '</span><span class="pv-chip-count">%READ_TIME%</span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span>';
-			} else {
-				$rep = '<span class="pv-chip-label">' . esc_html__( '字数', 'post-views' ) . '</span><span class="pv-chip-count">%WORD_COUNT%</span><span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span>';
-			}
-			$pattern = '/<span class="pv-chip-label">.*?<\/span>\s*<span class="pv-chip-count">%VIEW_COUNT%<\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
-
-		// 6. neon-pill: <span class="pv-neon-text">浏览 <strong>%VIEW_COUNT%</strong></span>
-		if ( false !== strpos( $template, 'pv-neon-pill' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-neon-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-neon-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
-			}
-			$pattern = '/<span class="pv-neon-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
-
-		// 7. sunset-pill: <span class="pv-sunset-text"><strong>%VIEW_COUNT%</strong> 次浏览</span>
-		if ( false !== strpos( $template, 'pv-sunset-pill' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-sunset-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-sunset-text"><strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
-			}
-			$pattern = '/<span class="pv-sunset-text"><strong>%VIEW_COUNT%<\/strong>[^<]*<\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
-
-		// 8. solid-dark-pill: <span class="pv-solid-text">阅读量 <strong>%VIEW_COUNT%</strong></span>
-		if ( false !== strpos( $template, 'pv-solid-dark-pill' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<span class="pv-solid-text">' . esc_html__( '预计阅读', 'post-views' ) . ' <strong>%READ_TIME%</strong></span>';
-			} elseif ( $is_words_only ) {
-				$rep = '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '</span>';
-			} else {
-				$rep = '<span class="pv-solid-text">' . esc_html__( '全文', 'post-views' ) . ' <strong>%WORD_COUNT%</strong> ' . esc_html__( '字', 'post-views' ) . '<span class="pv-reading-meta"><span class="pv-meta-dot">·</span> ' . esc_html__( '预计阅读', 'post-views' ) . ' %READ_TIME%</span></span>';
-			}
-			$pattern = '/<span class="pv-solid-text">.*?<strong>%VIEW_COUNT%<\/strong><\/span>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
-			}
-		}
-
-		// 9. stat-box: <div class="pv-stat-value">%VIEW_COUNT_ROUNDED%</div><div class="pv-stat-label">浏览统计</div>
-		if ( false !== strpos( $template, 'pv-stat-box' ) ) {
-			if ( $is_time_only ) {
-				$rep = '<div class="pv-stat-value">%READ_TIME%</div><div class="pv-stat-label">' . esc_html__( '预计阅读', 'post-views' ) . '</div>';
-			} elseif ( $is_words_only ) {
-				$rep = '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '文章字数', 'post-views' ) . '</div>';
-			} else {
-				$rep = '<div class="pv-stat-value">%WORD_COUNT%</div><div class="pv-stat-label">' . esc_html__( '字数 · 预计阅读 ', 'post-views' ) . '%READ_TIME%</div>';
-			}
-			$pattern = '/<div class="pv-stat-value">%VIEW_COUNT_ROUNDED%<\/div>\s*<div class="pv-stat-label">.*?<\/div>/u';
-			if ( preg_match( $pattern, $template ) ) {
-				return preg_replace( $pattern, $rep, $template, 1 );
+			if ( preg_match( $preset['pattern'], $template ) ) {
+				return preg_replace( $preset['pattern'], $preset[ $key ], $template, 1 );
 			}
 		}
 
 		// Generic fallback: replace %VIEW_COUNT% with stats.
-		if ( $is_time_only ) {
+		if ( 'stats_time' === $mode ) {
 			return str_replace( '%VIEW_COUNT%', '预计阅读 %READ_TIME%', $template );
-		} elseif ( $is_words_only ) {
+		}
+		if ( 'stats_words' === $mode ) {
 			return str_replace( '%VIEW_COUNT%', '%WORD_COUNT%', $template );
 		}
 		return str_replace( '%VIEW_COUNT%', '%WORD_COUNT% 字 · 预计阅读 %READ_TIME%', $template );

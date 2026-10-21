@@ -40,10 +40,15 @@ if ( ! function_exists( 'postviews_uninstall_site' ) ) {
 			delete_option( $option_name );
 		}
 
-		// The hourly aggregate and the rate-limit transients are the plugin's
-		// other footprint. The rate keys are per (IP, post) and therefore
-		// unbounded in number, so a LIKE sweep is the only way to catch them.
+		// The hourly aggregate, the leaderboard cache, the buffered counter ids
+		// and the rate-limit bucket are the plugin's other footprint. The buffered
+		// per-post counters live in the object cache, which is flushed by group
+		// below rather than enumerated.
 		delete_transient( 'postviews_total_views' );
+		delete_transient( 'postviews_leaderboard_cache' );
+		delete_transient( 'postviews_buffer_ids' );
+		delete_transient( 'postviews_buffer_pool' );
+		delete_transient( 'postviews_rate_bucket' );
 
 		global $wpdb;
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -52,14 +57,20 @@ if ( ! function_exists( 'postviews_uninstall_site' ) ) {
 			OR option_name LIKE '\\_transient\\_timeout\\_postviews\\_rate\\_%'"
 		);
 
-		// Drop custom stats table and clear prune cron event.
+		// Drop custom stats table and clear the cron events.
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}post_views_stats" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		wp_clear_scheduled_hook( 'postviews_daily_prune' );
+		wp_clear_scheduled_hook( 'postviews_flush_buffer_event' );
+
+		if ( function_exists( 'wp_cache_flush_group' ) ) {
+			wp_cache_flush_group( 'post-views' );
+		}
 
 		// The core helper rather than a DELETE against $wpdb->postmeta: it does
 		// the same work and invalidates the post meta cache while it is at it.
 		delete_post_meta_by_key( 'views' );
 		delete_post_meta_by_key( 'views_offset' );
+		delete_post_meta_by_key( 'views_multiplier' );
 	}
 }
 

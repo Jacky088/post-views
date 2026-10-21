@@ -67,6 +67,10 @@ class PostViews_Admin {
 		PostViews_Stats::create_table();
 		$table_name = PostViews_Stats::get_table_name();
 		$today      = current_time( 'Y-m-d' );
+		// The counters being copied are historical, so they land on yesterday:
+		// writing them into today made the "Today" leaderboard useless and
+		// overstated today's traffic on every run.
+		$target_date = gmdate( 'Y-m-d', strtotime( '-1 day', strtotime( $today ) ) );
 
 		// Seed stats table with existing posts that have views.
 		$seeded_count = $wpdb->query(
@@ -78,10 +82,12 @@ class PostViews_Admin {
 				WHERE pm.meta_key = 'views'
 				AND (pm.meta_value + 0) > 0
 				AND p.post_status = 'publish'
-				ON DUPLICATE KEY UPDATE views = VALUES(views)",
-				$today
+				ON DUPLICATE KEY UPDATE views = GREATEST(views, VALUES(views))",
+				$target_date
 			)
 		);
+
+		PostViews_Stats::clear_leaderboard_cache();
 
 		wp_safe_redirect( admin_url( 'edit.php?page=post-views-stats&seeded_stats=' . (int) $seeded_count ) );
 		exit;
@@ -594,6 +600,7 @@ class PostViews_Admin {
 		}
 
 		delete_transient( 'postviews_total_views' );
+		PostViews_Stats::clear_leaderboard_cache();
 		if ( function_exists( 'wp_cache_flush_group' ) ) {
 			wp_cache_flush_group( 'post-views' );
 		}
@@ -760,7 +767,7 @@ class PostViews_Admin {
 
 			<!-- Notices -->
 			<?php if ( isset( $_GET['seeded_stats'] ) ) : ?>
-				<div class="notice notice-success is-dismissible" style="margin: 0 0 20px 0; border-radius: 8px;"><p><?php printf( esc_html__( '成功同步初始化！已为 %d 篇文章生成今日周期排行数据。', 'post-views' ), (int) $_GET['seeded_stats'] ); ?></p></div>
+				<div class="notice notice-success is-dismissible" style="margin: 0 0 20px 0; border-radius: 8px;"><p><?php printf( esc_html__( '同步完成！已将 %d 篇文章的历史阅读量写入昨日基准，今日数据仍按真实访问累加。', 'post-views' ), (int) $_GET['seeded_stats'] ); ?></p></div>
 			<?php endif; ?>
 
 			<!-- Summary Metric Cards -->
@@ -799,7 +806,7 @@ class PostViews_Admin {
 							<?php esc_html_e( '新功能提示：周期排行榜已成功就绪', 'post-views' ); ?>
 						</div>
 						<div class="pv-callout-body">
-							<?php esc_html_e( '2.1.0 引入了独立的轻量周期统计表，新访客浏览文章将自动实时累加至今日与本周。若您希望当前周期榜单立即有数据展示，可点击右侧按钮，一键将现有文章的历史阅读量同步为初始基准。', 'post-views' ); ?>
+							<?php esc_html_e( '2.1.0 引入了独立的轻量周期统计表，新访客浏览文章将自动实时累加至今日与本周。若您希望当前周期榜单立即有数据展示，可点击右侧按钮，一键将现有文章的历史阅读量作为「昨日」基准同步（不会覆盖今日的真实数据）。', 'post-views' ); ?>
 						</div>
 					</div>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0;">
@@ -864,7 +871,7 @@ class PostViews_Admin {
 										<input type="hidden" name="action" value="postviews_seed_period_stats" />
 										<?php wp_nonce_field( 'postviews_seed_period_stats' ); ?>
 										<button type="submit" class="pv-btn-primary">
-											⚡ <?php esc_html_e( '一键同步现有文章历史阅读量为初始基准', 'post-views' ); ?>
+											⚡ <?php esc_html_e( '一键同步历史阅读量为昨日基准', 'post-views' ); ?>
 										</button>
 									</form>
 								<?php endif; ?>

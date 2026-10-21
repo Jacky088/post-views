@@ -24,6 +24,17 @@ class PostViews_Stats {
 	const TABLE_NAME = 'post_views_stats';
 
 	/**
+	 * Transient holding the cached leaderboard results.
+	 *
+	 * The 'all' leaderboard joins the whole postmeta table, which is expensive on
+	 * a site with tens of thousands of posts. One transient stores a map keyed
+	 * by period/type/limit so the whole cache can be dropped in one call.
+	 *
+	 * @var string
+	 */
+	const LEADERBOARD_CACHE_KEY = 'postviews_leaderboard_cache';
+
+	/**
 	 * Hook registration.
 	 *
 	 * @return void
@@ -77,10 +88,26 @@ class PostViews_Stats {
 	 * @return void
 	 */
 	public static function record_view( $post_id ) {
+		self::record_views( $post_id, 1 );
+	}
+
+	/**
+	 * Atomically record several views for the current date.
+	 *
+	 * Used by the buffer flush so a batch of buffered hits becomes one statement
+	 * instead of one per hit.
+	 *
+	 * @param int $post_id Post ID.
+	 * @param int $views   Number of views to add.
+	 * @return void
+	 */
+	public static function record_views( $post_id, $views = 1 ) {
 		global $wpdb;
 
 		$post_id = (int) $post_id;
-		if ( $post_id <= 0 ) {
+		$views   = (int) $views;
+
+		if ( $post_id <= 0 || $views <= 0 ) {
 			return;
 		}
 
@@ -91,10 +118,11 @@ class PostViews_Stats {
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$table_name} (post_id, view_date, views)
-				VALUES (%d, %s, 1)
-				ON DUPLICATE KEY UPDATE views = views + 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				VALUES (%d, %s, %d)
+				ON DUPLICATE KEY UPDATE views = views + VALUES(views)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$post_id,
-				$today
+				$today,
+				$views
 			)
 		);
 	}
@@ -257,6 +285,13 @@ class PostViews_Stats {
 		$limit      = max( 1, min( 100, (int) $limit ) );
 		$where_type = '';
 
+		$cache_key = $period . '|' . ( is_array( $post_type ) ? implode( ',', $post_type ) : (string) $post_type ) . '|' . $limit;
+		$cache     = get_transient( self::LEADERBOARD_CACHE_KEY );
+
+		if ( is_array( $cache ) && isset( $cache[ $cache_key ] ) ) {
+			return $cache[ $cache_key ];
+		}
+
 		if ( ! empty( $post_type ) && 'any' !== $post_type ) {
 			$post_types   = (array) $post_type;
 			$placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
@@ -264,7 +299,7 @@ class PostViews_Stats {
 		}
 
 		if ( 'all' === $period ) {
-			$sql = "SELECT p.ID as post_id, (pm.meta_value + 0) as period_views, (pm.meta_value + 0) as total_views
+			$sql = "SELECT p.ID as post_id, CAST(pm.meta_value AS UNSIGNED) as period_views, CAST(pm.meta_value AS UNSIGNED) as total_views
 				FROM {$wpdb->posts} p
 				LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = 'views'
 				WHERE p.post_status = 'publish'
@@ -279,7 +314,7 @@ class PostViews_Stats {
 			}
 
 			$sql = $wpdb->prepare(
-				"SELECT s.post_id, SUM(s.views) as period_views, (pm.meta_value + 0) as total_views
+				"SELECT s.post_id, SUM(s.views) as period_views, CAST(pm.meta_value AS UNSIGNED) as total_views
 				FROM {$table_name} s
 				INNER JOIN {$wpdb->posts} p ON p.ID = s.post_id
 				LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = 'views'
@@ -295,12 +330,9 @@ class PostViews_Stats {
 			$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		}
 
-		if ( empty( $rows ) ) {
-			return array();
-		}
-
 		$results = array();
-		foreach ( $rows as $row ) {
+
+		foreach ( (array) $rows as $row ) {
 			$pid  = (int) $row->post_id;
 			$post = get_post( $pid );
 			if ( ! $post ) {
@@ -344,6 +376,23 @@ class PostViews_Stats {
 			);
 		}
 
+		$cache = is_array( $cache ) ? $cache : array();
+
+		$cache[ $cache_key ] = $results;
+		set_transient( self::LEADERBOARD_CACHE_KEY, $cache, 5 * MINUTE_IN_SECONDS );
+
 		return $results;
+	}
+
+	/**
+	 * Drop the cached leaderboard results.
+	 *
+	 * Called whenever the underlying numbers are rewritten wholesale, so the
+	 * admin does not have to wait out the five-minute window.
+	 *
+	 * @return void
+	 */
+	public static function clear_leaderboard_cache() {
+		delete_transient( self::LEADERBOARD_CACHE_KEY );
 	}
 }

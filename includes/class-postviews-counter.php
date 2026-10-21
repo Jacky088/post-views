@@ -164,6 +164,32 @@ class PostViews_Counter {
 	}
 
 	/**
+	 * Whether the count has to be reported by the browser.
+	 *
+	 * A cached page cannot be counted during wp_head, and the reading-time and
+	 * scroll-depth rules can only be evaluated once the visitor has actually
+	 * spent time on the page. In both cases the server-side increment is
+	 * skipped in favour of the client script.
+	 *
+	 * @return bool
+	 */
+	public static function needs_client_report() {
+		if ( self::using_ajax() ) {
+			return true;
+		}
+
+		if ( PostViews_Options::get_int( 'dwell_time' ) > 0 ) {
+			return true;
+		}
+
+		if ( PostViews_Options::get_int( 'scroll_depth' ) > 0 ) {
+			return true;
+		}
+
+		return 1 === PostViews_Options::get_int( 'count_mode' );
+	}
+
+	/**
 	 * The post this request is a view of, or null.
 	 *
 	 * @return WP_Post|null
@@ -234,7 +260,7 @@ class PostViews_Counter {
 			return;
 		}
 
-		if ( self::using_ajax() ) {
+		if ( self::needs_client_report() ) {
 			return;
 		}
 
@@ -251,7 +277,7 @@ class PostViews_Counter {
 	 * @return void
 	 */
 	public static function enqueue() {
-		if ( ! self::using_ajax() ) {
+		if ( ! self::needs_client_report() ) {
 			return;
 		}
 
@@ -305,7 +331,7 @@ class PostViews_Counter {
 	public static function ajax_increment() {
 		check_ajax_referer( 'wp_postviews_nonce', 'nonce' );
 
-		if ( ! self::using_ajax() ) {
+		if ( ! self::needs_client_report() ) {
 			return;
 		}
 
@@ -346,21 +372,14 @@ class PostViews_Counter {
 		// 窗口为 0 或负数时视为关闭限流（postviews_rate_limit_seconds 过滤器）。
 		$seconds = (int) apply_filters( 'postviews_rate_limit_seconds', 3 );
 
-		if ( $seconds > 0 ) {
-			$client_ip    = self::get_client_ip();
-			$rate_key     = 'postviews_rate_' . md5( $client_ip . '|' . $post_id );
-			$rate_blocked = get_transient( $rate_key );
-			if ( false !== $rate_blocked ) {
-				$current_views = (int) get_post_meta( $post_id, 'views', true );
-				wp_send_json_success(
-					array(
-						'views'     => $current_views,
-						'throttled' => true,
-					)
-				);
-			}
-			// 首次（或冷却已过）：记录冷却标记。
-			set_transient( $rate_key, time(), $seconds );
+		if ( ! self::check_rate_limit( $post_id, $seconds ) ) {
+			$current_views = (int) get_post_meta( $post_id, 'views', true );
+			wp_send_json_success(
+				array(
+					'views'     => $current_views,
+					'throttled' => true,
+				)
+			);
 		}
 
 		$post_views = self::increment( $post_id, 'postviews_increment_views_ajax' );
@@ -421,6 +440,54 @@ class PostViews_Counter {
 	}
 
 	/**
+	 * Whether the current client may increment this post right now.
+	 *
+	 * Previously every hit wrote its own transient, which on a busy site left
+	 * one expired option row per IP and post behind. The window map lives in a
+	 * single transient instead, and expired entries are dropped as it is read.
+	 * When an external object cache is present the placeholder insert is atomic,
+	 * so concurrent requests cannot both win the window.
+	 *
+	 * @param int $post_id Post ID.
+	 * @param int $seconds Window length; zero or less disables rate limiting.
+	 * @return bool True when the view may be counted.
+	 */
+	protected static function check_rate_limit( $post_id, $seconds ) {
+		$seconds = (int) $seconds;
+		if ( $seconds <= 0 ) {
+			return true;
+		}
+
+		$key = md5( self::get_client_ip() . '|' . (int) $post_id );
+		$now = time();
+
+		if ( wp_using_ext_object_cache() ) {
+			return (bool) wp_cache_add( 'postviews_rate_' . $key, $now, 'post-views', $seconds );
+		}
+
+		$bucket = get_transient( 'postviews_rate_bucket' );
+		if ( ! is_array( $bucket ) ) {
+			$bucket = array();
+		}
+
+		foreach ( $bucket as $hash => $expires ) {
+			if ( (int) $expires <= $now ) {
+				unset( $bucket[ $hash ] );
+			}
+		}
+
+		$allowed = ! isset( $bucket[ $key ] );
+
+		if ( $allowed ) {
+			$bucket[ $key ] = $now + $seconds;
+		}
+
+		set_transient( 'postviews_rate_bucket', $bucket, max( 300, $seconds ) );
+
+		return $allowed;
+	}
+
+	/**
 	 * Add one to a post's view count.
 	 *
 	 * The bump is a single atomic UPDATE rather than a read-modify-write:
@@ -432,7 +499,7 @@ class PostViews_Counter {
 	 * @return int The new count.
 	 */
 	protected static function increment( $post_id, $hook ) {
-		if ( 1 === PostViews_Options::get_int( 'enable_buffer' ) ) {
+		if ( 1 === PostViews_Options::get_int( 'enable_buffer' ) && wp_using_ext_object_cache() ) {
 			return self::buffer_increment( $post_id, $hook );
 		}
 
@@ -480,54 +547,87 @@ class PostViews_Counter {
 	}
 
 	/**
-	 * Buffer view increment in transient memory for high-concurrency environments.
+	 * Buffer view increment in the object cache for high-concurrency environments.
+	 *
+	 * Each post gets its own counter, incremented with wp_cache_incr() so the
+	 * read-modify-write happens inside Redis/Memcached rather than in PHP. A
+	 * second key keeps the list of posts with pending hits, which is what the
+	 * flush walks; the old transient approach rewrote the whole pool on every
+	 * request and lost counts whenever two requests overlapped.
 	 *
 	 * @param int    $post_id Post ID.
 	 * @param string $hook    Action hook.
 	 * @return int Estimated current view count.
 	 */
 	public static function buffer_increment( $post_id, $hook ) {
-		$buffer_key = 'postviews_buffer_pool';
-		$buffer     = get_transient( $buffer_key );
-		if ( ! is_array( $buffer ) ) {
-			$buffer = array();
+		$post_id    = (int) $post_id;
+		$buffer_key = 'postviews_buffer_' . $post_id;
+
+		if ( ! wp_cache_add( $buffer_key, 1, 'post-views', HOUR_IN_SECONDS ) ) {
+			wp_cache_incr( $buffer_key, 1, 'post-views' );
 		}
 
-		$buffer[ $post_id ] = isset( $buffer[ $post_id ] ) ? (int) $buffer[ $post_id ] + 1 : 1;
-		set_transient( $buffer_key, $buffer, 3600 );
+		// A single running total makes the threshold check one cache read rather
+		// than one per post with pending hits.
+		if ( ! wp_cache_add( 'postviews_buffer_total', 1, 'post-views', HOUR_IN_SECONDS ) ) {
+			wp_cache_incr( 'postviews_buffer_total', 1, 'post-views' );
+		}
 
+		$ids = wp_cache_get( 'postviews_buffer_ids', 'post-views' );
+		if ( ! is_array( $ids ) ) {
+			$ids = array();
+		}
+
+		if ( ! in_array( $post_id, $ids, true ) ) {
+			$ids[] = $post_id;
+			wp_cache_set( 'postviews_buffer_ids', $ids, 'post-views', HOUR_IN_SECONDS );
+		}
+
+		$current   = (int) get_post_meta( $post_id, 'views', true ) + (int) wp_cache_get( $buffer_key, 'post-views' );
 		$threshold = max( 10, PostViews_Options::get_int( 'buffer_threshold', 50 ) );
-		$total     = array_sum( $buffer );
-		if ( $total >= $threshold ) {
+
+		if ( self::get_buffered_count() >= $threshold ) {
 			self::flush_buffer();
 		}
 
-		$current = (int) get_post_meta( $post_id, 'views', true ) + (int) ( $buffer[ $post_id ] ?? 0 );
 		do_action( $hook, $current );
 		return $current;
 	}
 
 	/**
-	 * Bulk flush all buffered counts from transient to postmeta and daily stats table.
+	 * Bulk flush all buffered counts to postmeta and the daily stats table.
 	 *
 	 * @return int Total flushed view counts.
 	 */
 	public static function flush_buffer() {
-		$buffer_key = 'postviews_buffer_pool';
-		$buffer     = get_transient( $buffer_key );
-		if ( empty( $buffer ) || ! is_array( $buffer ) ) {
+		$ids = wp_cache_get( 'postviews_buffer_ids', 'post-views' );
+		if ( empty( $ids ) || ! is_array( $ids ) ) {
+			wp_cache_delete( 'postviews_buffer_ids', 'post-views' );
 			return 0;
 		}
 
-		delete_transient( $buffer_key );
+		// Detach the list first so hits arriving during the flush start a new one.
+		wp_cache_delete( 'postviews_buffer_ids', 'post-views' );
 
 		global $wpdb;
 		$total_flushed = 0;
 
-		foreach ( $buffer as $post_id => $hits ) {
-			$post_id = (int) $post_id;
-			$hits    = (int) $hits;
-			if ( $post_id <= 0 || $hits <= 0 ) {
+		foreach ( $ids as $post_id ) {
+			$post_id    = (int) $post_id;
+			$buffer_key = 'postviews_buffer_' . $post_id;
+
+			if ( $post_id <= 0 ) {
+				wp_cache_delete( $buffer_key, 'post-views' );
+				continue;
+			}
+
+			$hits = (int) wp_cache_get( $buffer_key, 'post-views' );
+
+			if ( $hits > 0 && false === wp_cache_decr( $buffer_key, $hits, 'post-views' ) ) {
+				wp_cache_delete( $buffer_key, 'post-views' );
+			}
+
+			if ( $hits <= 0 ) {
 				continue;
 			}
 
@@ -553,24 +653,25 @@ class PostViews_Counter {
 
 			wp_cache_delete( $post_id, 'post_meta' );
 
-			for ( $i = 0; $i < $hits; $i++ ) {
-				PostViews_Stats::record_view( $post_id );
-			}
+			PostViews_Stats::record_views( $post_id, $hits );
 
 			$total_flushed += $hits;
+		}
+
+		if ( $total_flushed > 0 ) {
+			wp_cache_decr( 'postviews_buffer_total', $total_flushed, 'post-views' );
 		}
 
 		return $total_flushed;
 	}
 
 	/**
-	 * Get total views currently pending in buffer.
+	 * Get total views currently pending in the buffer.
 	 *
 	 * @return int
 	 */
 	public static function get_buffered_count() {
-		$buffer = get_transient( 'postviews_buffer_pool' );
-		return is_array( $buffer ) ? array_sum( $buffer ) : 0;
+		return (int) wp_cache_get( 'postviews_buffer_total', 'post-views' );
 	}
 
 	/**
@@ -599,7 +700,7 @@ class PostViews_Counter {
 			'post-views/v1',
 			'/hit',
 			array(
-				'methods'             => array( 'GET', 'POST' ),
+				'methods'             => array( 'POST' ),
 				'callback'            => array( __CLASS__, 'rest_hit' ),
 				'permission_callback' => '__return_true',
 			)
@@ -627,22 +728,23 @@ class PostViews_Counter {
 			return new WP_REST_Response( array( 'error' => 'not_countable' ), 200 );
 		}
 
+		// Nothing loads this endpoint unless the browser is expected to report,
+		// so a hit arriving on a site that counts during wp_head is not one of
+		// ours.
+		if ( ! self::needs_client_report() ) {
+			return new WP_REST_Response( array( 'error' => 'not_countable' ), 200 );
+		}
+
 		$seconds = (int) apply_filters( 'postviews_rate_limit_seconds', 3 );
-		if ( $seconds > 0 ) {
-			$client_ip    = self::get_client_ip();
-			$rate_key     = 'postviews_rate_' . md5( $client_ip . '|' . $post_id );
-			$rate_blocked = get_transient( $rate_key );
-			if ( false !== $rate_blocked ) {
-				$current_views = (int) get_post_meta( $post_id, 'views', true );
-				return new WP_REST_Response(
-					array(
-						'views'     => $current_views,
-						'throttled' => true,
-					),
-					200
-				);
-			}
-			set_transient( $rate_key, time(), $seconds );
+		if ( ! self::check_rate_limit( $post_id, $seconds ) ) {
+			$current_views = (int) get_post_meta( $post_id, 'views', true );
+			return new WP_REST_Response(
+				array(
+					'views'     => $current_views,
+					'throttled' => true,
+				),
+				200
+			);
 		}
 
 		$post_views = self::increment( $post_id, 'postviews_increment_views_ajax' );

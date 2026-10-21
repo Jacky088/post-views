@@ -1,0 +1,1129 @@
+# Copyright (C) 2026 Post Views
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Post Views 2.1.1\n"
+"Report-Msgid-Bugs-To: https://github.com/Jacky088/post-views\n"
+"POT-Creation-Date: 2026-10-21 01:22+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: bin/make-pot.php\n"
+
+#: includes/class-postviews-display.php:355 includes/class-postviews-query.php:179
+msgid "%d 分钟"
+msgid_plural "%d 分钟"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-postviews-settings.php:659
+msgid "%d 行记录 (35天自动归档)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:275 includes/class-postviews-admin.php:327
+msgid "%s Most Viewed Page"
+msgid_plural "%s Most Viewed Pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-postviews-admin.php:269 includes/class-postviews-admin.php:322
+msgid "%s Most Viewed Post"
+msgid_plural "%s Most Viewed Posts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-postviews-settings.php:401
+msgid "(9 款高颜值样式预设)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:851
+msgid "(TOP 30 热门排行)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:809
+msgid "2.1.0 引入了独立的轻量周期统计表，新访客浏览文章将自动实时累加至今日与本周。若您希望当前周期榜单立即有数据展示，可点击右侧按钮，一键将现有文章的历史阅读量作为「昨日」基准同步（不会覆盖今日的真实数据）。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:300
+msgid "<strong>%s</strong> view was generated."
+msgid_plural "<strong>%s</strong> views were generated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-postviews-settings.php:902
+msgid "Gutenberg 原生区块生态"
+msgstr ""
+
+#: includes/class-postviews-settings.php:755
+msgid "PV 模式（每次访问/刷新均自增 1）"
+msgstr ""
+
+#: includes/class-postviews-admin.php:254 includes/class-postviews-admin.php:295
+msgid "Post Views"
+msgstr ""
+
+#: includes/class-postviews-settings.php:770
+msgid "REST API 现代化端点 (/wp-json/post-views/v1/hit) [推荐]"
+msgstr ""
+
+#: includes/class-postviews-settings.php:760
+msgid "UV 模式利用客户端本地指纹与时间戳自动去重，有效排除单人高频重复刷新。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:756
+msgid "UV 模式（同一访客 24 小时内对同一文章仅计入 1 次）"
+msgstr ""
+
+#: includes/class-postviews-admin.php:62 includes/class-postviews-admin.php:551
+msgid "Unauthorized"
+msgstr ""
+
+#: includes/class-postviews-settings.php:687
+msgid "WP_Query 开发者调用规范："
+msgstr ""
+
+#: includes/class-postviews-settings.php:711
+msgid "WordPress 控制台首页小工具"
+msgstr ""
+
+#: includes/class-postviews-admin.php:816
+msgid "一键同步历史数据为初始基准"
+msgstr ""
+
+#: includes/class-postviews-admin.php:874
+msgid "一键同步历史阅读量为昨日基准"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1097
+msgid "一键安全扫描并导入历史数据"
+msgstr ""
+
+#: includes/class-postviews-settings.php:549
+msgid "不在其他页面显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:547
+msgid "不在归档页显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:548
+msgid "不在搜索页显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:545
+msgid "不在文章页显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:546
+msgid "不在独立页面显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:544
+msgid "不在首页显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:539
+msgid "专为 JustNews 等主题的快讯 (kuaixun) 设计的专属布局。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:973
+msgid "为新发布文章自动赋予初始浏览底数，以及设置全局浏览量放大倍率，彻底解决新文章发布后前台浏览量为 0 的冷启动尴尬。"
+msgstr ""
+
+#: includes/class-postviews-widget.php:188
+msgid "仅 %s"
+msgstr ""
+
+#: includes/class-postviews-settings.php:258
+msgid "仅对注册用户显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:783
+msgid "仅已登录用户"
+msgstr ""
+
+#: includes/class-postviews-settings.php:523
+msgid "仅文章字数单独显示 (不显浏览量 · 例：全文约 1,850 字)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:783
+msgid "仅游客"
+msgstr ""
+
+#: includes/class-postviews-settings.php:522
+msgid "仅阅读时间单独显示 (不显浏览量 · 例：预计阅读 6 分钟)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:668
+msgid "今日全站浏览"
+msgstr ""
+
+#: includes/class-postviews-admin.php:777 includes/class-postviews-settings.php:649
+msgid "今日全站阅读量"
+msgstr ""
+
+#: includes/class-postviews-admin.php:679
+msgid "今日暂无统计数据"
+msgstr ""
+
+#: includes/class-postviews-admin.php:677
+msgid "今日最热 Top 5"
+msgstr ""
+
+#: includes/class-postviews-widget.php:175
+msgid "今日热门"
+msgstr ""
+
+#: includes/class-postviews-admin.php:735 includes/class-postviews-admin.php:826
+msgid "今日热门榜"
+msgstr ""
+
+#: includes/class-postviews-admin.php:781
+msgid "今日访客产生的高精独立阅读聚合"
+msgstr ""
+
+#: includes/class-postviews-settings.php:995
+msgid "从"
+msgstr ""
+
+#: includes/class-postviews-settings.php:718
+msgid "仪表盘首页卡片："
+msgstr ""
+
+#: includes/class-postviews-settings.php:771
+msgid "传统兼容端点 (admin-ajax.php)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:891
+msgid "作者"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1112
+msgid "保存所有设置"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1012
+msgid "倍 (默认 1.0 为真实无放大)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:720 includes/class-postviews-settings.php:1050
+msgid "停用"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1014
+msgid "全局统一倍率。如设置为 1.5，真实每产生 10 次阅读，前台呈现 15 次。若文章在单篇编辑页单独配置了专属倍率，则单篇优先。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1009
+msgid "全局虚拟放大倍率："
+msgstr ""
+
+#: includes/class-postviews-display.php:414 includes/class-postviews-display.php:415 includes/class-postviews-display.php:456 includes/class-postviews-display.php:457
+msgid "全文"
+msgstr ""
+
+#: includes/class-postviews-display.php:420 includes/class-postviews-display.php:432 includes/class-postviews-display.php:505
+msgid "全文约"
+msgstr ""
+
+#: includes/class-postviews-settings.php:403
+msgid "全新升级显示样式，丰富的预设模板，满足不同主题风格需求。支持自定义 CSS，轻松打造个性化效果。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:934
+msgid "全站通用的轻量短代码，点击即可快速复制。"
+msgstr ""
+
+#: includes/class-postviews-widget.php:183
+msgid "全部"
+msgstr ""
+
+#: includes/class-postviews-widget.php:174
+msgid "全部时间（累计）"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1028
+msgid "公式示例：真实浏览 20 次，全局倍率 1.5，随机初始底数 200 => 前台最终呈现为：round(20 × 1.5) + 200 = 230 次浏览。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:845
+msgid "共有 %d 条浏览计数待落库"
+msgstr ""
+
+#: includes/class-postviews-settings.php:538
+msgid "关闭"
+msgstr ""
+
+#: includes/class-postviews-settings.php:827
+msgid "关闭（即时写入 MySQL）"
+msgstr ""
+
+#: includes/class-postviews-settings.php:549
+msgid "其他页面："
+msgstr ""
+
+#: includes/class-postviews-settings.php:447
+msgid "内容类型与页面展示控制"
+msgstr ""
+
+#: includes/class-postviews-widget.php:206
+msgid "分类 ID："
+msgstr ""
+
+#: includes/class-postviews-settings.php:547
+msgid "分类/归档页："
+msgstr ""
+
+#: includes/class-postviews-settings.php:380
+msgid "初始底数与数据运维"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1023
+msgid "前台最终展示阅读量联动计算公式："
+msgstr ""
+
+#: includes/class-postviews-admin.php:445
+msgid "前台最终显示预估："
+msgstr ""
+
+#: includes/class-postviews-settings.php:479
+msgid "勾选后插件会自动在对应内容的正文中添加浏览量显示。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:376
+msgid "区块与阅读时长"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1057
+msgid "单独为此文章指定专属放大倍率（如 2.0 倍）；"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1056
+msgid "单独为此文章覆盖设定初始底数（如 500 次）；"
+msgstr ""
+
+#: includes/class-postviews-settings.php:583
+msgid "单篇文章模板："
+msgstr ""
+
+#: includes/class-postviews-settings.php:885
+msgid "占位符使用示例："
+msgstr ""
+
+#: includes/class-postviews-admin.php:738 includes/class-postviews-admin.php:838
+msgid "历史总榜 (全量累计)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:354
+msgid "历史数据迁移完成！已为 %d 篇文章成功合并历史浏览量。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:890
+msgid "历史累计"
+msgstr ""
+
+#: includes/class-postviews-admin.php:892
+msgid "发布日期"
+msgstr ""
+
+#: includes/class-postviews-settings.php:584 includes/class-postviews-settings.php:608
+msgid "可用变量占位符："
+msgstr ""
+
+#: includes/class-postviews-settings.php:497
+msgid "右上角 (正文上方)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:495
+msgid "右下角 (正文下方 · 默认)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:770
+msgid "同步完成！已将 %d 篇文章的历史阅读量写入昨日基准，今日数据仍按真实访问累加。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:789
+msgid "否"
+msgstr ""
+
+#: includes/class-postviews-settings.php:987
+msgid "启用后，任何新文章在首次点击“发布”时，系统将自动在下方区间内随机生成一个底数保存到该文章的 views_offset 中，已有文章不受影响。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:720
+msgid "启用控制台首页「今日与本周热门文章 Top 5」卡片"
+msgstr ""
+
+#: includes/class-postviews-settings.php:457
+msgid "启用的内容类型："
+msgstr ""
+
+#: includes/class-postviews-admin.php:786
+msgid "周度趋势"
+msgstr ""
+
+#: includes/class-postviews-settings.php:368
+msgid "周期榜单与统计"
+msgstr ""
+
+#: includes/class-postviews-settings.php:642
+msgid "周期榜单监控看板"
+msgstr ""
+
+#: includes/class-postviews-admin.php:863
+msgid "周期榜单（今日/本周/本月）为全新独立高精统计表，随着访客在前台浏览文章将实时自动累加生成。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:793 includes/class-postviews-settings.php:657
+msgid "周期独立统计表状态"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1042
+msgid "在 WordPress 文章与页面编辑页右侧边栏注入独立管理面板，支持实时手动微调。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:921
+msgid "在侧边栏、正文或全站模板中插入今日、本周或本月的热门排行榜列表。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:712
+msgid "在后台主页（仪表盘）显示今日与本周热门文章 Top 5 卡片。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1050
+msgid "在文章与页面编辑页面右侧边栏显示「浏览量设置」面板"
+msgstr ""
+
+#: includes/class-postviews-block.php:46
+msgid "在文章或模板中显示浏览量标签。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:913
+msgid "在正文任意位置插入当前文章阅读量胶囊，可在右侧检查器快速微调显示样式。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:643
+msgid "基于独立轻量日统计表（wp_post_views_stats），精准记录每日阅读增量，支持今日、近7天与近30天热门榜单。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:853
+msgid "基于独立轻量统计表与元数据综合运算，实时呈现当前统计周期内全站最受访客喜爱的文章。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:591 includes/class-postviews-settings.php:615
+msgid "复制"
+msgstr ""
+
+#: includes/class-postviews-settings.php:693
+msgid "复制代码"
+msgstr ""
+
+#: includes/class-postviews-settings.php:944 includes/class-postviews-settings.php:953
+msgid "复制短代码"
+msgstr ""
+
+#: includes/class-postviews-settings.php:317
+msgid "复古轻奢 (分形 HUD 设计)"
+msgstr ""
+
+#: includes/class-postviews-widget.php:208
+msgid "多个分类用英文逗号分隔，仅对\"按分类\"类型有效。"
+msgstr ""
+
+#: includes/class-postviews-display.php:414 includes/class-postviews-display.php:415 includes/class-postviews-display.php:420 includes/class-postviews-display.php:421 includes/class-postviews-display.php:426 includes/class-postviews-display.php:427 includes/class-postviews-display.php:432 includes/class-postviews-display.php:433 includes/class-postviews-display.php:444 includes/class-postviews-display.php:445 includes/class-postviews-display.php:450 includes/class-postviews-display.php:451 includes/class-postviews-display.php:456 includes/class-postviews-display.php:457 includes/class-postviews-display.php:505 includes/class-postviews-display.php:508
+msgid "字"
+msgstr ""
+
+#: includes/class-postviews-settings.php:876
+msgid "字/分钟 (默认 300)"
+msgstr ""
+
+#: includes/class-postviews-display.php:438 includes/class-postviews-display.php:439
+msgid "字数"
+msgstr ""
+
+#: includes/class-postviews-display.php:463
+msgid "字数 · 预计阅读 "
+msgstr ""
+
+#: includes/class-postviews-settings.php:521
+msgid "字数与阅读时间单独显示 (不显浏览量 · 例：约 1,850 字 · 预计阅读 6 分钟)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1058
+msgid "实时公式联动计算："
+msgstr ""
+
+#: includes/class-postviews-admin.php:778
+msgid "实时统计"
+msgstr ""
+
+#: includes/class-postviews-admin.php:430
+msgid "实际浏览量："
+msgstr ""
+
+#: includes/class-postviews-settings.php:257
+msgid "对所有人显示"
+msgstr ""
+
+#: includes/class-postviews-admin.php:887
+msgid "封面"
+msgstr ""
+
+#: includes/class-postviews-settings.php:498
+msgid "左上角 (正文上方)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:496
+msgid "左下角 (正文下方)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:797
+msgid "已开启 35 天高频数据滚动自动归档"
+msgstr ""
+
+#: includes/class-postviews-settings.php:873
+msgid "平均阅读速度："
+msgstr ""
+
+#: includes/class-postviews-settings.php:538
+msgid "开启右下角数量悬浮显示"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1052
+msgid "开启后，站长在后台【文章】->【写文章 / 编辑文章】右侧边栏中可随时："
+msgstr ""
+
+#: includes/class-postviews-settings.php:722
+msgid "开启后，站长登录后台即可随时洞察最新数据趋势。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:828
+msgid "开启后，高并发访问下的浏览量将先暂存聚合于 Redis / Memcached 对象缓存中，批量落库，彻底避免 MySQL 行锁冲突。未检测到外部对象缓存时自动改为即时写入，不会丢失数据。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:827
+msgid "开启对象缓存缓冲池聚合落库 [大流量推荐]"
+msgstr ""
+
+#: includes/class-postviews-settings.php:984
+msgid "开启：新文章发布时自动赋予随机初始底数"
+msgstr ""
+
+#: includes/class-postviews-settings.php:764
+msgid "异步数据上报协议："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1084
+msgid "当前数据库中未检测到残留的第三方主题历史字段。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:844
+msgid "当前缓冲池状态："
+msgstr ""
+
+#: includes/class-postviews-settings.php:534
+msgid "快讯详情页显示："
+msgstr ""
+
+#: includes/class-postviews-settings.php:598 includes/class-postviews-settings.php:622
+msgid "恢复默认模板"
+msgstr ""
+
+#: includes/class-postviews-settings.php:357
+msgid "成功同步初始化！已为 %d 篇文章生成今日周期排行数据。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:783
+msgid "所有人"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1055
+msgid "手动修正实际阅读量："
+msgstr ""
+
+#: includes/class-postviews-settings.php:344 includes/class-postviews-settings.php:667
+msgid "打开浏览量排行榜面板"
+msgstr ""
+
+#: includes/class-postviews-admin.php:762
+msgid "打开浏览量设置面板"
+msgstr ""
+
+#: includes/class-postviews-block.php:65
+msgid "按今日、本周、本月或全部时间展示热门文章排行。"
+msgstr ""
+
+#: includes/class-postviews-widget.php:168
+msgid "按分类最多浏览"
+msgstr ""
+
+#: includes/class-postviews-widget.php:166
+msgid "按分类最少浏览"
+msgstr ""
+
+#: includes/class-postviews-admin.php:886
+msgid "排名"
+msgstr ""
+
+#: includes/class-postviews-settings.php:787
+msgid "排除爬虫机器人："
+msgstr ""
+
+#: includes/class-postviews-settings.php:548
+msgid "搜索结果页："
+msgstr ""
+
+#: includes/class-postviews-settings.php:903
+msgid "支持在块编辑器中键入 /views 随时插入原生计数与榜单区块。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:743
+msgid "支持现代化 REST API 异步端点与 UV 去重防刷机制，保障数据真实性。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:680
+msgid "支持短代码与原生 WP_Query 灵活嵌入，与现有第三方主题的卡片列表样式无缝结合。"
+msgstr ""
+
+#: includes/class-postviews-display.php:462
+msgid "文章字数"
+msgstr ""
+
+#: includes/class-postviews-settings.php:866
+msgid "文章字数与预计阅读时长配置"
+msgstr ""
+
+#: includes/class-postviews-admin.php:888
+msgid "文章标题"
+msgstr ""
+
+#: includes/class-postviews-block.php:43
+msgid "文章浏览量"
+msgstr ""
+
+#: includes/class-postviews-admin.php:378
+msgid "文章浏览量排行榜"
+msgstr ""
+
+#: includes/class-postviews-admin.php:752
+msgid "文章浏览量排行榜 (Post Views Leaderboards)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:365
+msgid "文章浏览量统计 (Post Views)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:336
+msgid "文章浏览量设置 (Post Views)"
+msgstr ""
+
+#: includes/class-postviews-widget.php:181
+msgid "文章类型："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1041
+msgid "文章编辑页单篇管理面板 (Meta Box)"
+msgstr ""
+
+#: includes/class-postviews-core.php:191
+msgid "文章被浏览的次数。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:545
+msgid "文章详情页："
+msgstr ""
+
+#: includes/class-postviews-settings.php:912
+msgid "文章阅读计数器区块"
+msgstr ""
+
+#: includes/class-postviews-admin.php:806
+msgid "新功能提示：周期排行榜已成功就绪"
+msgstr ""
+
+#: includes/class-postviews-admin.php:437
+msgid "新文冷启动基础曝光，直接累加到底数中。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:972
+msgid "新文章初始底数与虚拟倍率全局自动化配置 (运营利器)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:979
+msgid "新文章自动随机底数："
+msgstr ""
+
+#: includes/class-postviews-admin.php:719
+msgid "无权访问此页面"
+msgstr ""
+
+#: includes/class-postviews-widget.php:172
+msgid "时间范围："
+msgstr ""
+
+#: includes/class-postviews-settings.php:789
+msgid "是（自动识别主流搜索引擎与爬虫 User-Agent）"
+msgstr ""
+
+#: includes/class-postviews-settings.php:364
+msgid "显示外观预设"
+msgstr ""
+
+#: includes/class-postviews-widget.php:197
+msgid "显示数量："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1080
+msgid "智能扫描结果看板："
+msgstr ""
+
+#: includes/class-postviews-query.php:92 includes/class-postviews-query.php:142
+msgid "暂无数据"
+msgstr ""
+
+#: includes/class-postviews-widget.php:167
+msgid "最多浏览"
+msgstr ""
+
+#: includes/class-postviews-widget.php:165
+msgid "最少浏览"
+msgstr ""
+
+#: includes/class-postviews-settings.php:809
+msgid "有效停留时长门槛："
+msgstr ""
+
+#: includes/class-postviews-settings.php:817
+msgid "有效滚动深度门槛："
+msgstr ""
+
+#: includes/class-postviews-settings.php:781
+msgid "有效访客过滤："
+msgstr ""
+
+#: includes/class-postviews-admin.php:693
+msgid "本周暂无统计数据"
+msgstr ""
+
+#: includes/class-postviews-admin.php:691
+msgid "本周最热 Top 5"
+msgstr ""
+
+#: includes/class-postviews-admin.php:736 includes/class-postviews-admin.php:830
+msgid "本周热门榜 (近7天)"
+msgstr ""
+
+#: includes/class-postviews-widget.php:176
+msgid "本周热门（7天）"
+msgstr ""
+
+#: includes/class-postviews-display.php:426
+msgid "本文全文约"
+msgstr ""
+
+#: includes/class-postviews-display.php:427
+msgid "本文约"
+msgstr ""
+
+#: includes/class-postviews-options.php:214
+msgid "本文阅读"
+msgstr ""
+
+#: includes/class-postviews-admin.php:737 includes/class-postviews-admin.php:834
+msgid "本月热门榜 (近30天)"
+msgstr ""
+
+#: includes/class-postviews-widget.php:177
+msgid "本月热门（30天）"
+msgstr ""
+
+#: includes/class-postviews-settings.php:315
+msgid "极简数字 (纯数字红点)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:316
+msgid "极简线性 (雅致书卷阅读)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:867
+msgid "查看历史总榜 (全量累计) &raquo;"
+msgstr ""
+
+#: includes/class-postviews-admin.php:706
+msgid "查看完整排行榜 &raquo;"
+msgstr ""
+
+#: includes/class-postviews-admin.php:929
+msgid "查看文章"
+msgstr ""
+
+#: includes/class-postviews-widget.php:201
+msgid "标题最大字符数："
+msgstr ""
+
+#: includes/class-postviews-widget.php:159
+msgid "标题："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1055
+msgid "校准文章真实的 views 累计计数；"
+msgstr ""
+
+#: includes/class-postviews-admin.php:447 includes/class-postviews-admin.php:460 includes/class-postviews-admin.php:685 includes/class-postviews-admin.php:699 includes/class-postviews-admin.php:780 includes/class-postviews-admin.php:788 includes/class-postviews-admin.php:939 includes/class-postviews-display.php:526 includes/class-postviews-options.php:214 includes/class-postviews-settings.php:835
+msgid "次"
+msgstr ""
+
+#: includes/class-postviews-display.php:533 includes/class-postviews-options.php:217 includes/class-postviews-options.php:238
+msgid "次浏览"
+msgstr ""
+
+#: includes/class-postviews-display.php:523 includes/class-postviews-options.php:211
+msgid "次热度"
+msgstr ""
+
+#: includes/class-postviews-admin.php:935 includes/class-postviews-display.php:520 includes/class-postviews-options.php:212 includes/class-postviews-settings.php:1001
+msgid "次阅读"
+msgstr ""
+
+#: includes/class-postviews-admin.php:442
+msgid "每次真实访问放大的倍数（默认为 1.0 倍）。"
+msgstr ""
+
+#: includes/class-postviews-options.php:215 includes/class-postviews-options.php:216
+msgid "浏览"
+msgstr ""
+
+#: includes/class-postviews-display.php:536 includes/class-postviews-options.php:213
+msgid "浏览统计"
+msgstr ""
+
+#: includes/class-postviews-admin.php:103 includes/class-postviews-widget.php:26 includes/class-postviews-widget.php:41
+msgid "浏览量"
+msgstr ""
+
+#: includes/class-postviews-settings.php:520
+msgid "浏览量 + 仅文章字数同时显示 (例：1,234 次阅读 · 全文约 1,850 字)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:519
+msgid "浏览量 + 仅阅读时间同时显示 (例：1,234 次阅读 · 预计阅读 6 分钟)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:518
+msgid "浏览量 + 字数与阅读时间同时显示 (例：1,234 次阅读 · 约 1,850 字 · 预计阅读 6 分钟)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:517
+msgid "浏览量单独显示 (经典模式 · 默认)"
+msgstr ""
+
+#: includes/class-postviews-admin.php:379
+msgid "浏览量排行"
+msgstr ""
+
+#: includes/class-postviews-settings.php:400
+msgid "浏览量显示样式"
+msgstr ""
+
+#: includes/class-postviews-widget.php:28
+msgid "浏览量统计小工具"
+msgstr ""
+
+#: includes/class-postviews-settings.php:64
+msgid "浏览量设置"
+msgstr ""
+
+#: includes/class-postviews-admin.php:400 includes/class-postviews-settings.php:63
+msgid "浏览量设置 (Post Views)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:318
+msgid "海去动感 (Vision 晶透明玻璃)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:448
+msgid "灵活配置浏览量在哪些页面自动输出，支持针对不同访客身份精细控制。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:290
+msgid "点击复制变量占位符"
+msgstr ""
+
+#: includes/class-postviews-settings.php:607
+msgid "热门列表循环模板："
+msgstr ""
+
+#: includes/class-postviews-settings.php:679
+msgid "热门排行榜前台调用与组件 (开发者支持)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:920
+msgid "热门文章排行榜区块"
+msgstr ""
+
+#: includes/class-postviews-block.php:62
+msgid "热门文章榜单"
+msgstr ""
+
+#: includes/class-postviews-settings.php:546
+msgid "独立页面："
+msgstr ""
+
+#: includes/class-postviews-settings.php:314
+msgid "现代简洁 (Line+ 简约圆角)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:620
+msgid "用于生成热门文章列表每个 li 元素的 HTML 结构。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:596
+msgid "留空则使用默认样式输出；如上方更换了预设，该项会自动同步更新。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:933
+msgid "短代码 (Shortcodes) 快捷指南"
+msgstr ""
+
+#: includes/class-postviews-settings.php:118
+msgid "确定要重置所有选项为默认值吗？未保存的自定义设置将被覆盖。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:812
+msgid "秒"
+msgstr ""
+
+#: includes/class-postviews-settings.php:723
+msgid "立即前往仪表盘查看 &raquo;"
+msgstr ""
+
+#: includes/class-postviews-settings.php:848
+msgid "立即手动落库清空缓冲"
+msgstr ""
+
+#: includes/class-postviews-settings.php:877
+msgid "系统采用中英双语精准分词，自动计算正文总字数与预计阅读时间。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:836
+msgid "累积达到指定次数时自动触发批量写入，后台定时 Cron 亦会每分钟自动保底写入。"
+msgstr ""
+
+#: includes/class-postviews-display.php:421 includes/class-postviews-display.php:508
+msgid "约"
+msgstr ""
+
+#: includes/class-postviews-settings.php:776
+msgid "绕过庞大的 admin-ajax.php 主循环，大幅提升并发吞吐量并减轻服务器 CPU 负荷。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:749
+msgid "统计模式 (PV / UV)："
+msgstr ""
+
+#: includes/class-postviews-widget.php:163
+msgid "统计类型："
+msgstr ""
+
+#: includes/class-postviews-settings.php:832
+msgid "缓冲批量落库阈值："
+msgstr ""
+
+#: includes/class-postviews-settings.php:351
+msgid "缓冲池已刷新！成功批量落库入表 %d 次浏览量。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:927
+msgid "编辑"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1058
+msgid "编辑框内输入数值即时呈现前台最终展示结果，所见即所得。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1048
+msgid "编辑页侧边栏面板："
+msgstr ""
+
+#: includes/class-postviews-settings.php:509
+msgid "胶囊内容显示模式："
+msgstr ""
+
+#: includes/class-postviews-settings.php:487
+msgid "胶囊显示位置："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1073
+msgid "自动深度扫描数据库中第三方主题或插件的历史浏览数据（如 pageviews、post_views_count 等），仅导入目前 views 字段为空或为 0 的文章，绝不覆盖已有正常计数。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:794
+msgid "自动运维"
+msgstr ""
+
+#: includes/class-postviews-settings.php:574
+msgid "自定义 HTML 模板 (高级)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:502
+msgid "自定义文章/页面等常规内容中浏览量胶囊的排版位置（快讯保持右下独立悬浮，不受此项影响）。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1057
+msgid "自定义虚拟倍率 (Multiplier)："
+msgstr ""
+
+#: includes/class-postviews-settings.php:1056
+msgid "自定义虚拟底数 (Offset)："
+msgstr ""
+
+#: includes/class-postviews-settings.php:527
+msgid "自由选择胶囊内展示的内容组合（浏览量单独显示 / 字数时间单独显示 / 两者同时显示），胶囊外观预设、高度与图标完美保持不变。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:999
+msgid "至"
+msgstr ""
+
+#: includes/class-postviews-admin.php:435
+msgid "虚拟初始底数 (Offset)："
+msgstr ""
+
+#: includes/class-postviews-admin.php:440
+msgid "虚拟放大倍率 (Multiplier)："
+msgstr ""
+
+#: includes/class-postviews-admin.php:796
+msgid "行记录"
+msgstr ""
+
+#: includes/class-postviews-settings.php:742
+msgid "计数模式与轻量端点协议"
+msgstr ""
+
+#: includes/class-postviews-admin.php:450
+msgid "计算公式：(实际浏览量 × 虚拟倍率) + 虚拟底数"
+msgstr ""
+
+#: includes/class-postviews-widget.php:203
+msgid "设为 0 则不截断。"
+msgstr ""
+
+#: wp-postviews.php:45
+msgid "设置"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1118
+msgid "设置已准备就绪"
+msgstr ""
+
+#: includes/class-postviews-settings.php:821
+msgid "访客向下滚动浏览达到正文百分比后才触发计数（0 = 立即计入）。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:813
+msgid "访客在页面停留超过指定秒数才触发计数（0 = 立即计入）。建议设置 5~10 秒，有效过滤秒退跳出。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:432
+msgid "访客真实产生的浏览次数，可手动校正。"
+msgstr ""
+
+#: includes/class-postviews-admin.php:862
+msgid "该周期下暂无阅读数据记录"
+msgstr ""
+
+#: includes/class-postviews-settings.php:322
+msgid "赛博霓虹 (深空青芒荧光)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1072
+msgid "跨主题 / 竞品插件数据一键迁移"
+msgstr ""
+
+#: includes/class-postviews-settings.php:319
+msgid "轻奢圆角 (深色渐变发光)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:942
+msgid "输出当前文章的阅读量标签。支持传入 id 参数指定文章：[views id=\"123\"]"
+msgstr ""
+
+#: includes/class-postviews-settings.php:951
+msgid "输出热门排行列表。参数：period=\"today|week|month|all\" limit=\"10\""
+msgstr ""
+
+#: includes/class-postviews-admin.php:789
+msgid "过去 7 天连续周期热度统计累加"
+msgstr ""
+
+#: includes/class-postviews-admin.php:785 includes/class-postviews-settings.php:653
+msgid "近 7 天全站阅读量"
+msgstr ""
+
+#: includes/class-postviews-admin.php:672
+msgid "近 7 天浏览量"
+msgstr ""
+
+#: includes/class-postviews-settings.php:803
+msgid "通过有效停留与深度判定过滤误触秒退；利用 Redis / Memcached 对象缓存缓冲池彻底避免高并发锁表。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:867
+msgid "采用中英双语精准分词，自动计算正文总字数与预计阅读时长，支持在模板中无缝输出。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1123
+msgid "重置为默认"
+msgstr ""
+
+#: includes/class-postviews-options.php:210 includes/class-postviews-options.php:218
+msgid "阅读量"
+msgstr ""
+
+#: includes/class-postviews-settings.php:802
+msgid "防秒退判定与高并发缓冲池"
+msgstr ""
+
+#: includes/class-postviews-settings.php:992
+msgid "随机初始底数区间："
+msgstr ""
+
+#: includes/class-postviews-settings.php:320
+msgid "霓红渐变 (渐变数字发光)"
+msgstr ""
+
+#: includes/class-postviews-display.php:413 includes/class-postviews-display.php:415 includes/class-postviews-display.php:419 includes/class-postviews-display.php:421 includes/class-postviews-display.php:425 includes/class-postviews-display.php:427 includes/class-postviews-display.php:431 includes/class-postviews-display.php:433 includes/class-postviews-display.php:437 includes/class-postviews-display.php:439 includes/class-postviews-display.php:443 includes/class-postviews-display.php:445 includes/class-postviews-display.php:449 includes/class-postviews-display.php:451 includes/class-postviews-display.php:455 includes/class-postviews-display.php:457 includes/class-postviews-display.php:461 includes/class-postviews-display.php:502 includes/class-postviews-display.php:508
+msgid "预计阅读"
+msgstr ""
+
+#: includes/class-postviews-settings.php:544
+msgid "首页显示："
+msgstr ""
+
+#: includes/class-postviews-settings.php:372
+msgid "高并发与防刷引擎"
+msgstr ""
+
+#: includes/class-postviews-settings.php:825
+msgid "高并发写入缓冲池："
+msgstr ""
+
+#: includes/class-postviews-settings.php:575
+msgid "高级用户可自由编写 HTML 结构与变量占位符。预设切换将自动更新单篇模板。"
+msgstr ""
+
+#: includes/class-postviews-settings.php:321
+msgid "黑曜石圆边 (动态脉冲信号)"
+msgstr ""
+
+#: includes/class-postviews-settings.php:1004
+msgid "默认范围为 100 ~ 300。新文章发布时在此区间闭区间内随机取整数赋值。"
+msgstr ""
+
