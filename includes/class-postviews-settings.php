@@ -419,10 +419,13 @@ class PostViews_Settings {
 											$reading_mode = PostViews_Display::get_capsule_display_mode();
 											if ( 0 === strpos( $reading_mode, 'stats_' ) ) {
 												$preview_tpl = PostViews_Display::transform_template_for_stats_only( $preview_tpl, $reading_mode );
-											} elseif ( 0 === strpos( $reading_mode, 'both' ) ) {
+											} elseif ( 0 === strpos( $reading_mode, 'both' ) && false === strpos( $preview_tpl, '%READ_TIME%' ) && false === strpos( $preview_tpl, '%WORD_COUNT%' ) ) {
 												$preview_tpl = PostViews_Display::inject_reading_stats_to_template( $preview_tpl, $reading_mode );
 											}
-											echo wp_kses_post(
+											// PostViews_Options::kses() keeps the inline SVG icons. A bare
+											// wp_kses_post() strips them, which made every preview capsule
+											// render without its icon and drift away from the front end.
+											echo PostViews_Options::kses(
 												str_replace(
 													array( '%VIEW_COUNT%', '%VIEW_COUNT_ROUNDED%', '%READ_TIME%', '%WORD_COUNT%' ),
 													array( '1,234', '1.2K', '6 分钟', '1,850' ),
